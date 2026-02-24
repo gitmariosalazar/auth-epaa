@@ -5,7 +5,10 @@ import { environments } from '../../../../settings/environments/environments';
 import { statusCode } from '../../../../settings/environments/status-code';
 
 class DatabaseError extends Error {
-  constructor(message: string, public readonly code?: string) {
+  constructor(
+    message: string,
+    public readonly code?: string,
+  ) {
     super(message);
     this.name = 'DatabaseError';
   }
@@ -22,6 +25,13 @@ export class DatabaseServicePostgreSQL extends DatabaseAbstract {
   public constructor() {
     super();
     this.validateConfig();
+    console.log(
+      environments.DATABASE_HOST,
+      environments.DATABASE_NAME,
+      environments.DATABASE_PASSWORD,
+      environments.DATABASE_PORT,
+      environments.DATABASE_USER,
+    );
     const poolConfig: PoolConfig = {
       user: environments.DATABASE_USER,
       host: environments.DATABASE_HOST,
@@ -30,7 +40,7 @@ export class DatabaseServicePostgreSQL extends DatabaseAbstract {
       port: environments.DATABASE_PORT,
       max: 20,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      connectionTimeoutMillis: 10000,
     };
 
     this.pool = new Pool(poolConfig);
@@ -53,14 +63,14 @@ export class DatabaseServicePostgreSQL extends DatabaseAbstract {
       databaseHostname: environments.DATABASE_HOST,
       databasePassword: environments.DATABASE_PASSWORD,
       databaseName: environments.DATABASE_NAME,
-      databasePort: environments.DATABASE_PORT
+      databasePort: environments.DATABASE_PORT,
     };
 
     for (const [key, value] of Object.entries(requiredConfigs)) {
       if (!value) {
         throw new RpcException({
           statusCode: statusCode.INTERNAL_SERVER_ERROR,
-          message: `Missing database configuration: ${key}`,
+          message: `Database configuration error: Missing ${key}`,
         });
       }
     }
@@ -93,12 +103,42 @@ export class DatabaseServicePostgreSQL extends DatabaseAbstract {
         if (attempt === this.maxRetries) {
           throw new RpcException({
             statusCode: statusCode.INTERNAL_SERVER_ERROR,
-            message: 'Exceeded maximum connection attempts to PostgreSQL: ' + error.message,
+            message: 'Could not connect to PostgreSQL after multiple attempts',
           });
         }
 
-        await new Promise(resolve => setTimeout(resolve, this.retryDelayMs * Math.pow(2, attempt)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, this.retryDelayMs * Math.pow(2, attempt)),
+        );
       }
+    }
+  }
+
+  public async transaction<T>(
+    operations: (client: Pool) => Promise<T>,
+  ): Promise<T> {
+    if (!this.isConnected) {
+      throw new RpcException({
+        statusCode: statusCode.INTERNAL_SERVER_ERROR,
+        message: 'Database is not connected',
+      });
+    }
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await operations(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      const errorMessage = `Transaction failed: ${error.message}`;
+      console.error(errorMessage);
+      throw new RpcException({
+        statusCode: statusCode.INTERNAL_SERVER_ERROR,
+        message: errorMessage,
+      });
+    } finally {
+      client.release();
     }
   }
 
@@ -111,24 +151,30 @@ export class DatabaseServicePostgreSQL extends DatabaseAbstract {
     }
 
     try {
-      const result: QueryResult<T> = await Promise.race([
+      const result: QueryResult<T> = (await Promise.race([
         this.pool.query<T>(sql, params),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new RpcException({
-            statusCode: statusCode.INTERNAL_SERVER_ERROR,
-            message: 'Query timeout',
-          })), this.queryTimeoutMs)
-        )
-      ]) as QueryResult<T>;
+          setTimeout(
+            () =>
+              reject(
+                new RpcException({
+                  statusCode: statusCode.INTERNAL_SERVER_ERROR,
+                  message: 'Query timeout',
+                }),
+              ),
+            this.queryTimeoutMs,
+          ),
+        ),
+      ])) as QueryResult<T>;
 
       console.log(`Query executed successfully: ${sql.slice(0, 50)}...`);
       return result.rows;
     } catch (error) {
-      const errorMessage = `Database query failed: ${error.message}`;
+      const errorMessage = `Database query failed: ${error.message}, code: ${error.code}`;
       console.error(errorMessage, { sql, params });
       throw new RpcException({
         statusCode: statusCode.INTERNAL_SERVER_ERROR,
-        message: errorMessage,
+        message: error.message,
       });
     }
   }
@@ -147,12 +193,36 @@ export class DatabaseServicePostgreSQL extends DatabaseAbstract {
       console.error(`Failed to close database connection: ${error.message}`);
       throw new RpcException({
         statusCode: statusCode.INTERNAL_SERVER_ERROR,
-        message: 'Failed to close database connection: ' + error.message,
+        message: 'Failed to close database connection',
       });
     }
   }
 
   public getConnectionStatus(): boolean {
     return this.isConnected;
+  }
+
+  /**
+   * Obtiene un cliente del pool de conexiones para transacciones manuales o queries personalizadas.
+   * - El cliente debe liberarse con client.release() después de usarlo.
+   * @returns Client del pool
+   */
+  public async getClient() {
+    if (!this.isConnected || !this.pool) {
+      throw new RpcException({
+        statusCode: statusCode.INTERNAL_SERVER_ERROR,
+        message: 'Database pool is not connected or initialized',
+      });
+    }
+
+    try {
+      return await this.pool.connect();
+    } catch (error) {
+      console.error('Failed to get client from pool:', error);
+      throw new RpcException({
+        statusCode: statusCode.INTERNAL_SERVER_ERROR,
+        message: 'Failed to obtain database client',
+      });
+    }
   }
 }

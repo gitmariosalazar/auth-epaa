@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
-import { Transport } from '@nestjs/microservices';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { environments } from './settings/environments/environments';
 import * as morgan from 'morgan';
 import { DatabaseServicePostgreSQL } from './shared/connections/database/postgresql/postgresql.service';
@@ -11,32 +11,40 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  await app.listen(3008);
   app.use(morgan('dev'));
 
+  const postgresqlService: DatabaseServicePostgreSQL =
+    new DatabaseServicePostgreSQL();
 
-  const postgresqlService: DatabaseServicePostgreSQL = new DatabaseServicePostgreSQL();
+  const dbService = app.get(DatabaseServicePostgreSQL);
+  logger.log(await dbService.connect());
 
-  logger.log(await postgresqlService.connect())
-  logger.log(
-    `🚀🎉 The Authentication microservice is running on: http://localhost:${3008}✅`,
-  );
-
-  const microservice = await NestFactory.createMicroservice(AppModule, {
-    transport: Transport.KAFKA,
-    options: {
-      client: {
-        clientId: environments.AUTHENTICATION_KAFKA_CLIENT_ID,
-        brokers: [environments.KAFKA_BROKER_URL],
-      },
-      consumer: {
-        groupId: environments.AUTHENTICATION_KAFKA_GROUP_ID,
-        allowAutoTopicCreation: true,
+  const kafkaApp = await NestFactory.createMicroservice<MicroserviceOptions>(
+    AppModule,
+    {
+      transport: Transport.KAFKA,
+      options: {
+        client: {
+          clientId: environments.AUTHENTICATION_KAFKA_CLIENT_ID, // this is the pure consumer
+          brokers: [environments.KAFKA_BROKER_URL],
+        },
+        consumer: {
+          groupId: environments.AUTHENTICATION_KAFKA_GROUP_ID, // main consumption group
+          allowAutoTopicCreation: true,
+          // Optional: retry if Kafka goes down
+          retry: { retries: 5 },
+        },
       },
     },
-  });
+  );
 
-  await microservice.listen();
-  logger.log(`🚀🎉 The Authentication - microservice is listening to KAFKA...✅`);
+  await app.listen(environments.NODE_ENV === 'production' ? 3004 : 4004);
+  logger.log(
+    `🚀🎉 The Security microservice is running on: http://localhost:${environments.NODE_ENV === 'production' ? 3004 : 4004}✅`,
+  );
+
+  await kafkaApp.listen();
+  logger.log(`Nest application successfully started`);
 }
-bootstrap();
+
+void bootstrap();

@@ -1,5 +1,12 @@
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
 import * as Joi from 'joi';
+
+dotenv.config({
+  path:
+    process.env.NODE_ENV === 'production'
+      ? '.env.production'
+      : '.env.development',
+});
 
 interface EnvironmentsVariables {
   NODE_ENV: 'development' | 'production' | 'test' | 'provision';
@@ -18,6 +25,14 @@ interface EnvironmentsVariables {
   AUTHENTICATION_KAFKA_CLIENT: string;
   KAFKA_BROKER_INTERNAL: string;
   KAFKA_BROKER_EXTERNAL: string;
+  // Roles Kafka Clients
+  ROLES_KAFKA_CLIENT_ID: string;
+  ROLES_KAFKA_CLIENT: string;
+  ROLES_KAFKA_GROUP_ID: string;
+  // JWT Settings
+  JWT_SECRET: string;
+  JWT_ACCESS_EXPIRATION: string;
+  JWT_REFRESH_EXPIRATION: string;
 }
 
 const environmentsSchema = Joi.object<EnvironmentsVariables>({
@@ -38,7 +53,15 @@ const environmentsSchema = Joi.object<EnvironmentsVariables>({
   AUTHENTICATION_KAFKA_GROUP_ID: Joi.string().required(),
   AUTHENTICATION_KAFKA_CLIENT: Joi.string().required(),
   KAFKA_BROKER_INTERNAL: Joi.string().required(),
-  KAFKA_BROKER_EXTERNAL: Joi.string().required()
+  KAFKA_BROKER_EXTERNAL: Joi.string().required(),
+  // Roles Kafka Clients
+  ROLES_KAFKA_CLIENT_ID: Joi.string().required(),
+  ROLES_KAFKA_CLIENT: Joi.string().required(),
+  ROLES_KAFKA_GROUP_ID: Joi.string().required(),
+  // JWT Settings
+  JWT_SECRET: Joi.string().required(),
+  JWT_ACCESS_EXPIRATION: Joi.string().required(),
+  JWT_REFRESH_EXPIRATION: Joi.string().required(),
 }).unknown(true);
 
 const { error, value: envVars } = environmentsSchema.validate(process.env);
@@ -57,11 +80,20 @@ export const environments: EnvironmentsVariables = {
   DEBUG: envVars.DEBUG === true,
   ALLOWED_HOSTS: envVars.ALLOWED_HOSTS,
   SECRET_KEY: envVars.SECRET_KEY,
-  KAFKA_BROKER_URL: envVars.KAFKA_BROKER_INTERNAL || envVars.KAFKA_BROKER_EXTERNAL,
+  KAFKA_BROKER_URL:
+    envVars.KAFKA_BROKER_INTERNAL || envVars.KAFKA_BROKER_EXTERNAL,
   KAFKA_TOPIC: envVars.KAFKA_TOPIC,
   AUTHENTICATION_KAFKA_CLIENT_ID: envVars.AUTHENTICATION_KAFKA_CLIENT_ID,
   AUTHENTICATION_KAFKA_GROUP_ID: envVars.AUTHENTICATION_KAFKA_GROUP_ID,
   AUTHENTICATION_KAFKA_CLIENT: envVars.AUTHENTICATION_KAFKA_CLIENT,
   KAFKA_BROKER_EXTERNAL: envVars.KAFKA_BROKER_EXTERNAL,
-  KAFKA_BROKER_INTERNAL: envVars.KAFKA_BROKER_INTERNAL
+  KAFKA_BROKER_INTERNAL: envVars.KAFKA_BROKER_INTERNAL,
+  // Roles Kafka Clients
+  ROLES_KAFKA_CLIENT_ID: envVars.ROLES_KAFKA_CLIENT_ID,
+  ROLES_KAFKA_CLIENT: envVars.ROLES_KAFKA_CLIENT,
+  ROLES_KAFKA_GROUP_ID: envVars.ROLES_KAFKA_GROUP_ID,
+  // JWT Settings
+  JWT_SECRET: envVars.JWT_SECRET,
+  JWT_ACCESS_EXPIRATION: envVars.JWT_ACCESS_EXPIRATION,
+  JWT_REFRESH_EXPIRATION: envVars.JWT_REFRESH_EXPIRATION,
 };
