@@ -3,6 +3,7 @@ import { DatabaseAbstract } from '../abstract/abstract.database';
 import { RpcException } from '@nestjs/microservices';
 import { environments } from '../../../../settings/environments/environments';
 import { statusCode } from '../../../../settings/environments/status-code';
+import { AuditContextStorage } from '../../../utils/audit-context.storage';
 
 class DatabaseError extends Error {
   constructor(
@@ -126,6 +127,16 @@ export class DatabaseServicePostgreSQL extends DatabaseAbstract {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      
+      // Inject Audit Context if available
+      const auditCtx = AuditContextStorage.getContext();
+      if (auditCtx) {
+        await client.query(
+          `SELECT audit.fn_set_contexto($1, $2, $3, $4)`,
+          [auditCtx.userId, auditCtx.userName || '', auditCtx.ip || '', auditCtx.sessionId || '']
+        );
+      }
+
       const result = await operations(client);
       await client.query('COMMIT');
       return result;
@@ -151,6 +162,38 @@ export class DatabaseServicePostgreSQL extends DatabaseAbstract {
     }
 
     try {
+      // If we have an audit context, we MUST use a dedicated client and a transaction 
+      // to ensure fn_set_contexto and the query run in the same session.
+      const auditCtx = AuditContextStorage.getContext();
+      
+      if (auditCtx) {
+        const client = await this.pool.connect();
+        try {
+          await client.query('BEGIN');
+          await client.query(
+            `SELECT audit.fn_set_contexto($1, $2, $3, $4)`,
+            [auditCtx.userId, auditCtx.userName || '', auditCtx.ip || '', auditCtx.sessionId || '']
+          );
+          const result: QueryResult<T> = (await Promise.race([
+            client.query<T>(sql, params),
+            new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new RpcException({ statusCode: statusCode.INTERNAL_SERVER_ERROR, message: 'Query timeout' })),
+                this.queryTimeoutMs,
+              ),
+            ),
+          ])) as QueryResult<T>;
+          await client.query('COMMIT');
+          return result.rows;
+        } catch (err) {
+          await client.query('ROLLBACK');
+          throw err;
+        } finally {
+          client.release();
+        }
+      }
+
+      // Default path without audit context (direct pool query)
       const result: QueryResult<T> = (await Promise.race([
         this.pool.query<T>(sql, params),
         new Promise((_, reject) =>

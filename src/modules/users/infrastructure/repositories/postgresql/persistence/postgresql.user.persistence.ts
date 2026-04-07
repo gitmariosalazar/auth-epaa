@@ -146,10 +146,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
           params,
         );
       if (result.length === 0) {
-        throw new RpcException({
-          statusCode: statusCode.NOT_FOUND,
-          message: 'User not found',
-        });
+        return null;
       }
 
       const userResponse: UserResponseWithRolesAndPermissionsResponse =
@@ -162,6 +159,79 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       throw error;
     }
   }
+
+  async findByIdWithRolesAndPermissions(
+
+    userId: string,
+  ): Promise<UserResponseWithRolesAndPermissionsResponse | null> {
+    try {
+      const query: string = `
+        SELECT
+            u.usuario_id        AS "user_id",
+            u.username          AS "username",
+            u.email             AS "email",
+            e.nombres           AS "first_name",
+            e.apellidos         AS "last_name",
+            u.fecha_registro    AS "registered_at",
+            u.last_login        AS "last_login",
+            u.failed_attempts   AS "failed_attempts",
+            u.two_factor_enabled,
+            u.activo            AS "is_active",
+            u.observaciones     AS "observations",
+            u.password_hash     AS "password_hash",
+
+            -- Roles
+            COALESCE(
+                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre))
+                FROM usuario_roles ur2
+                JOIN roles r ON r.rol_id = ur2.rol_id
+                WHERE ur2.usuario_id = u.usuario_id),
+                '[]'::jsonb
+            )::json AS roles,
+
+            -- Permissions
+            COALESCE(
+                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre))
+                FROM (
+                    SELECT DISTINCT rp.permiso_id
+                    FROM usuario_roles ur2
+                    JOIN rol_permisos rp ON rp.rol_id = ur2.rol_id
+                    WHERE ur2.usuario_id = u.usuario_id
+                    UNION
+                    SELECT DISTINCT up.permiso_id
+                    FROM usuario_permisos up
+                    WHERE up.usuario_id = u.usuario_id
+                ) src
+                JOIN permisos p ON p.permiso_id = src.permiso_id
+                ),
+                '[]'::jsonb
+            )::json AS permissions
+
+        FROM usuarios u
+        LEFT JOIN empleados e on u.usuario_id = e.usuario_id
+        WHERE u.usuario_id = $1;
+      `;
+      const params = [userId];
+      const result =
+        await this.postgreSQLService.query<UserWithRolesAndPermissionsSQLResult>(
+          query,
+          params,
+        );
+      if (result.length === 0) {
+        return null;
+      }
+
+      const userResponse: UserResponseWithRolesAndPermissionsResponse =
+        UserAdapter.fromUserWithRolesAndPermissionsSQLResultToUserWithRolesAndPermissionsResponse(
+          result[0],
+        );
+
+      return userResponse;
+    } catch (error) {
+      throw error;
+    }
+  }
+
 
   async findByEmail(email: string): Promise<UserResponse | null> {
     try {

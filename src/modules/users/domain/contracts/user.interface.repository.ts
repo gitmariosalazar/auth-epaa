@@ -28,6 +28,11 @@ export interface InterfaceUserRepository {
     usernameOrEmail: string,
   ): Promise<UserResponseWithRolesAndPermissionsResponse | null>;
 
+  findByIdWithRolesAndPermissions(
+    userId: string,
+  ): Promise<UserResponseWithRolesAndPermissionsResponse | null>;
+
+
   findAllUsers(
     limit: number,
     offset: number,

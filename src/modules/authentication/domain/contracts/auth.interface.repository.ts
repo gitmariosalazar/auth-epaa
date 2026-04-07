@@ -15,9 +15,13 @@ export interface InterfaceAuthRepository {
   //authenticateUser(authRequest: AuthRequest): Promise<AuthResponse>;
 
   // Gestión de tokens y sesiones
-  refreshToken(refreshRequest: RefreshTokenRequest): Promise<AuthResponse>;
+  findSessionByTokenHash(tokenHash: string): Promise<RefreshTokenModel | null>;
   invalidateAllRefreshTokens(userId: string): Promise<void>;
-  findByRefreshToken(token: string): Promise<UserResponse | null>;
+  invalidateRefreshToken(jti: string): Promise<boolean>;
+
+  // Refresh token management
+  storeRefreshToken(refreshToken: RefreshTokenModel): Promise<boolean>;
+  updateLastUsed(jti: string, lastUsedAt: Date): Promise<void>;
 
   // Seguridad y bloqueo
   lockAccount(userId: string, durationMinutes: number): Promise<void>;
@@ -27,9 +31,6 @@ export interface InterfaceAuthRepository {
   initiatePasswordReset(email: string): Promise<void>;
   resetPassword(token: string, newPassword: string): Promise<void>;
 
-  // Refresh token management
-  storeRefreshToken(refreshToken: RefreshTokenModel): Promise<boolean>;
-  deleteRefreshToken(jti: string): Promise<boolean>;
 
   // 2FA (opcional pero recomendado)
   /*

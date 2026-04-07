@@ -6,6 +6,7 @@ import { PostgresqlRolPermissionModule } from '../../modules/rol-permission/infr
 import { PostgresqlUserModule } from '../../modules/users/infrastructure/modules/postgresql/postgresql.user.module';
 import { PostgresqlUserEmployeeModule } from '../../modules/employees/infrastructure/modules/postgresql/postgresql.use-employee.module';
 import { PostgresqlAuthModule } from '../../modules/authentication/infrastructure/modules/postgresql/postgresql.auth.module';
+import { PostgreSQLAuditModule } from '../../modules/audit/infrastructure/modules/postgresql/postgresql.audit.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { PostgresqlAuthModule } from '../../modules/authentication/infrastructur
     PostgresqlUserModule,
     PostgresqlUserEmployeeModule,
     PostgresqlAuthModule,
+    PostgreSQLAuditModule,
   ],
   controllers: [],
   providers: [],
