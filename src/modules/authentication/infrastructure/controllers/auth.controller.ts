@@ -1,9 +1,11 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { AuthRequest } from '../../domain/schemas/dto/request/auth.request';
+import { VerifyUserRequest } from '../../domain/schemas/dto/request/verify-user.request';
 import { LoginUseCase } from '../../application/usecases/login.usecase';
 import { LogoutUseCase } from '../../application/usecases/logout.usecase';
 import { RefreshTokenUseCase } from '../../application/usecases/refresh-token.usecase';
+import { VerifyUserUseCase } from '../../application/usecases/verify-user.usecase';
 import { AuthDomainException } from '../../domain/exceptions/auth.exceptions';
 import { statusCode } from '../../../../settings/environments/status-code';
 
@@ -13,6 +15,7 @@ export class AuthController {
     private readonly loginUseCase: LoginUseCase,
     private readonly logoutUseCase: LogoutUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
+    private readonly verifyUserUseCase: VerifyUserUseCase,
   ) {}
 
 
@@ -55,6 +58,15 @@ export class AuthController {
   async refreshToken(@Payload() payload: { refreshToken: string }) {
     try {
       return await this.refreshTokenUseCase.execute(payload);
+    } catch (error) {
+      this.handleException(error);
+    }
+  }
+
+  @MessagePattern('authentication.auth.verify')
+  async verifyUser(@Payload() payload: VerifyUserRequest) {
+    try {
+      return await this.verifyUserUseCase.execute(payload);
     } catch (error) {
       this.handleException(error);
     }

@@ -25,3 +25,11 @@ export class AccountLockedException extends AuthDomainException {
     this.name = 'AccountLockedException';
   }
 }
+
+export class UserNotFoundException extends AuthDomainException {
+  constructor(identifier: string) {
+    super(`User '${identifier}' does not exist in the system.`);
+    this.name = 'UserNotFoundException';
+  }
+}
+

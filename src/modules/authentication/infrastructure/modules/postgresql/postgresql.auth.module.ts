@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PostgreSQLUserPersistence } from '../../../../users/infrastructure/repositories/postgresql/persistence/postgresql.user.persistence';
 import { LoginUseCase } from '../../../application/usecases/login.usecase';
 import { ValidateUserUseCase } from '../../../application/usecases/validate-user.usecase';
+import { VerifyUserUseCase } from '../../../application/usecases/verify-user.usecase';
 import { RefreshTokenUseCase } from '../../../application/usecases/refresh-token.usecase';
 import { LogoutUseCase } from '../../../application/usecases/logout.usecase';
 
@@ -25,6 +26,7 @@ import { LogoutUseCase } from '../../../application/usecases/logout.usecase';
     DatabaseServicePostgreSQL,
     LoginUseCase,
     ValidateUserUseCase,
+    VerifyUserUseCase,
     RefreshTokenUseCase,
     LogoutUseCase,
     {
