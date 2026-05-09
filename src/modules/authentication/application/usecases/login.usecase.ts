@@ -18,7 +18,6 @@ import { environments } from '../../../../settings/environments/environments';
 import { parseExpirationToSeconds } from '../../../../shared/utils/time.util';
 import { CreateRefreshTokenRequest } from '../../domain/schemas/dto/request/create.refresh-token.request';
 import { RefreshTokenModel } from '../../domain/schemas/models/refresh-token.model';
-import { DatabaseServicePostgreSQL } from '../../../../shared/connections/database/postgresql/postgresql.service';
 import { AuditContextStorage } from '../../../../shared/utils/audit-context.storage';
 
 @Injectable()
@@ -29,7 +28,6 @@ export class LoginUseCase {
     @Inject('UserRepository')
     private readonly userRepository: InterfaceUserRepository,
     private readonly jwtService: JwtService,
-    private readonly dbService: DatabaseServicePostgreSQL,
   ) {}
 
   async execute(authRequest: AuthRequest): Promise<AuthResponse> {
@@ -49,7 +47,15 @@ export class LoginUseCase {
       );
 
     if (!user) {
-      await this.logAccess(null, authRequest.username_or_email, 'LOGIN_FAILED', 'Usuario no existe');
+      const ctx = AuditContextStorage.getContext();
+      await this.authRepository.logAccess(
+        null, 
+        authRequest.username_or_email, 
+        'LOGIN_FAILED', 
+        ctx?.ip || '0.0.0.0', 
+        ctx?.userAgent || 'N/A', 
+        'Usuario no existe'
+      );
       throw new InvalidCredentialsException();
     }
 
@@ -59,7 +65,15 @@ export class LoginUseCase {
     );
 
     if (!passwordMatches) {
-      await this.logAccess(null, authRequest.username_or_email, 'LOGIN_FAILED', 'Contraseña incorrecta');
+      const ctx = AuditContextStorage.getContext();
+      await this.authRepository.logAccess(
+        null, 
+        authRequest.username_or_email, 
+        'LOGIN_FAILED', 
+        ctx?.ip || '0.0.0.0', 
+        ctx?.userAgent || 'N/A', 
+        'Contraseña incorrecta'
+      );
       throw new InvalidCredentialsException();
     }
 
@@ -101,7 +115,13 @@ export class LoginUseCase {
 
     await this.authRepository.storeRefreshToken(refreshTokenModel);
 
-    await this.logAccess(user.userId, user.username, 'LOGIN');
+    await this.authRepository.logAccess(
+      user.userId, 
+      user.username, 
+      'LOGIN',
+      ctx?.ip || '0.0.0.0',
+      ctx?.userAgent || 'N/A'
+    );
 
     return AuthMapper.fromUserWithRolesAndPermissionsToUserResponse(
       user,
@@ -111,17 +131,4 @@ export class LoginUseCase {
   }
 
 
-  private async logAccess(userId: string | null, username: string, event: string, reason: string | null = null) {
-    const ctx = AuditContextStorage.getContext();
-    const finalUsername = username || 'Desconocido';
-    const userAgent = ctx?.userAgent || 'N/A';
-    try {
-      await this.dbService.query(
-        `SELECT audit.fn_registrar_acceso($1, $2, $3, $4, $5, $6)`,
-        [userId, finalUsername, event, ctx?.ip || '0.0.0.0', userAgent, reason]
-      );
-    } catch (error) {
-      console.error('Error logging access audit:', error);
-    }
-  }
 }

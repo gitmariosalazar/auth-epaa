@@ -33,6 +33,7 @@ interface EnvironmentsVariables {
   JWT_SECRET: string;
   JWT_ACCESS_EXPIRATION: string;
   JWT_REFRESH_EXPIRATION: string;
+  DATABASE_TYPE: 'postgres' | 'mysql' | 'sqlserver';
 }
 
 const environmentsSchema = Joi.object<EnvironmentsVariables>({
@@ -62,6 +63,9 @@ const environmentsSchema = Joi.object<EnvironmentsVariables>({
   JWT_SECRET: Joi.string().required(),
   JWT_ACCESS_EXPIRATION: Joi.string().required(),
   JWT_REFRESH_EXPIRATION: Joi.string().required(),
+  DATABASE_TYPE: Joi.string()
+    .valid('postgres', 'mysql', 'sqlserver')
+    .default('postgres'),
 }).unknown(true);
 
 const { error, value: envVars } = environmentsSchema.validate(process.env);
@@ -96,4 +100,7 @@ export const environments: EnvironmentsVariables = {
   JWT_SECRET: envVars.JWT_SECRET,
   JWT_ACCESS_EXPIRATION: envVars.JWT_ACCESS_EXPIRATION,
   JWT_REFRESH_EXPIRATION: envVars.JWT_REFRESH_EXPIRATION,
+  DATABASE_TYPE:
+    envVars.DATABASE_TYPE ||
+    (envVars.DATABASE_PORT === 3306 ? 'mysql' : 'postgres'),
 };

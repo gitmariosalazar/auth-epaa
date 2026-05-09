@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { KafkaServiceModule } from '../../../../../shared/kafka/kafka-service.module';
 import { AuthController } from '../../controllers/auth.controller';
-import { DatabaseServicePostgreSQL } from '../../../../../shared/connections/database/postgresql/postgresql.service';
 import { PostgreSQLAuthPersistence } from '../../repositories/postgresql/persistence/postgresql.auth.persistence';
 import { environments } from '../../../../../settings/environments/environments';
 import { JwtModule } from '@nestjs/jwt';
@@ -19,11 +18,10 @@ import { LogoutUseCase } from '../../../application/usecases/logout.usecase';
       global: true,
       secret: environments.JWT_SECRET,
       signOptions: { expiresIn: '1h', algorithm: 'HS256' },
-    }),
-  ],
+    })],
   controllers: [AuthController],
   providers: [
-    DatabaseServicePostgreSQL,
+    
     LoginUseCase,
     ValidateUserUseCase,
     VerifyUserUseCase,
@@ -36,8 +34,7 @@ import { LogoutUseCase } from '../../../application/usecases/logout.usecase';
     {
       provide: 'UserRepository',
       useClass: PostgreSQLUserPersistence,
-    },
-  ],
+    }],
   exports: [],
 })
 export class PostgresqlAuthModule {}

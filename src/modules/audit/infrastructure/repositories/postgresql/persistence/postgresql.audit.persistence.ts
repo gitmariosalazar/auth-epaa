@@ -1,5 +1,6 @@
+import { AuditRegistroSQLResult, AuditSesionSQLResult } from '../../../interfaces/sql/audit.sql.result';
+import { DatabaseAbstract } from '../../../../../../shared/connections/database/abstract/abstract.database';
 import { Injectable } from '@nestjs/common';
-import { DatabaseServicePostgreSQL } from '../../../../../../shared/connections/database/postgresql/postgresql.service';
 import { InterfaceAuditRepository } from '../../../../domain/contracts/audit.interface.repository';
 import { LogSessionRequest } from '../../../../domain/schemas/dto/request/log-session.request';
 import {
@@ -8,17 +9,13 @@ import {
 } from '../../../../domain/schemas/dto/request/get-audit-logs.request';
 import { AuditRegistroResponse } from '../../../../domain/schemas/dto/response/audit-registro.response';
 import { AuditSesionResponse } from '../../../../domain/schemas/dto/response/audit-sesion.response';
-import {
-  AuditRegistroSQLResult,
-  AuditSesionSQLResult,
-} from '../../../interfaces/sql/audit.sql.result';
-import { AuditAdapter } from '../adapters/audit.adapter';
+import { AuditAdapter } from '../../../adapters/audit.adapter';
 import { RpcException } from '@nestjs/microservices';
 import { statusCode } from '../../../../../../settings/environments/status-code';
 
 @Injectable()
 export class PostgreSQLAuditPersistence implements InterfaceAuditRepository {
-  constructor(private readonly postgreSQLService: DatabaseServicePostgreSQL) {}
+  constructor(private readonly databaseService: DatabaseAbstract) {}
 
   async logSession(request: LogSessionRequest): Promise<void> {
     try {
@@ -36,7 +33,7 @@ export class PostgreSQLAuditPersistence implements InterfaceAuditRepository {
         request.failedReason || null,
         request.metadata ? JSON.stringify(request.metadata) : '{}',
       ];
-      await this.postgreSQLService.query(query, params);
+      await this.databaseService.query(query, params);
     } catch (error) {
       throw error;
     }
@@ -93,7 +90,7 @@ export class PostgreSQLAuditPersistence implements InterfaceAuditRepository {
       params.push(request.limit || 100);
       params.push(request.offset || 0);
 
-      const result = await this.postgreSQLService.query<AuditRegistroSQLResult>(
+      const result = await this.databaseService.query<AuditRegistroSQLResult>(
         query,
         params,
       );
@@ -143,7 +140,7 @@ export class PostgreSQLAuditPersistence implements InterfaceAuditRepository {
       params.push(request.limit || 100);
       params.push(request.offset || 0);
 
-      const result = await this.postgreSQLService.query<AuditSesionSQLResult>(
+      const result = await this.databaseService.query<AuditSesionSQLResult>(
         query,
         params,
       );

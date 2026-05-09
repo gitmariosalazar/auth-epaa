@@ -1,17 +1,19 @@
+import { DatabaseAbstract } from '../../../../../../shared/connections/database/abstract/abstract.database';
 import { Injectable } from '@nestjs/common';
-import { DatabaseServicePostgreSQL } from '../../../../../../shared/connections/database/postgresql/postgresql.service';
 import { InterfaceRolPermissionRepository } from '../../../../domain/contracts/rol-permission.interface.repository';
 import { RolPermissionResponse } from '../../../../domain/schemas/dto/response/rol-permission.response';
 import { RolPermissionModel } from '../../../../domain/schemas/models/rol-permission.model';
 import { RolPermissionSQLResult } from '../../../interfaces/sql/rol-permission.sql.result';
 import { RpcException } from '@nestjs/microservices';
 import { statusCode } from '../../../../../../settings/environments/status-code';
-import { RolPermissionAdapter } from '../adapters/rol-permission.adapter';
 import { Exists } from '../../../../../../shared/interfaces/verify-exists';
+import { RolPermissionAdapter } from '../../../adapters/rol-permission.adapter';
 
 @Injectable()
-export class RolPermissionPostgreSQLPersistence implements InterfaceRolPermissionRepository {
-  constructor(private readonly postgreSQLService: DatabaseServicePostgreSQL) {}
+export class RolPermissionPostgreSQLPersistence
+  implements InterfaceRolPermissionRepository
+{
+  constructor(private readonly databaseService: DatabaseAbstract) {}
 
   async createRolPermission(
     rolPermission: RolPermissionModel,
@@ -30,7 +32,7 @@ export class RolPermissionPostgreSQLPersistence implements InterfaceRolPermissio
         rolPermission.getPermissionId(),
       ];
 
-      const result = await this.postgreSQLService.query<RolPermissionSQLResult>(
+      const result = await this.databaseService.query<RolPermissionSQLResult>(
         query,
         params,
       );
@@ -72,7 +74,7 @@ export class RolPermissionPostgreSQLPersistence implements InterfaceRolPermissio
         rolPermissionId,
       ];
 
-      const result = await this.postgreSQLService.query<RolPermissionSQLResult>(
+      const result = await this.databaseService.query<RolPermissionSQLResult>(
         query,
         params,
       );
@@ -103,9 +105,9 @@ export class RolPermissionPostgreSQLPersistence implements InterfaceRolPermissio
       `;
       const params = [rolPermissionId];
 
-      const result = await this.postgreSQLService.query(query, params);
+      const result = await this.databaseService.execute(query, params);
 
-      if (result.length === 0) {
+      if (result.affectedRows === 0) {
         throw new RpcException({
           statusCode: statusCode.NOT_FOUND,
           message: 'Rol-Permission not found',
@@ -128,11 +130,11 @@ export class RolPermissionPostgreSQLPersistence implements InterfaceRolPermissio
           SELECT 1
           FROM rol_permisos
           WHERE rol_id = $1 AND permiso_id = $2
-        ) AS exists;
+        ) AS "exists";
       `;
       const params = [rolId, permissionId];
 
-      const result = await this.postgreSQLService.query<Exists>(query, params);
+      const result = await this.databaseService.query<any>(query, params);
 
       return result[0].exists;
     } catch (error) {
@@ -154,7 +156,7 @@ export class RolPermissionPostgreSQLPersistence implements InterfaceRolPermissio
       `;
       const params = [rolPermissionId];
 
-      const result = await this.postgreSQLService.query<RolPermissionSQLResult>(
+      const result = await this.databaseService.query<RolPermissionSQLResult>(
         query,
         params,
       );
@@ -190,7 +192,7 @@ export class RolPermissionPostgreSQLPersistence implements InterfaceRolPermissio
       `;
       const params = [limit, offset];
 
-      const result = await this.postgreSQLService.query<RolPermissionSQLResult>(
+      const result = await this.databaseService.query<RolPermissionSQLResult>(
         query,
         params,
       );

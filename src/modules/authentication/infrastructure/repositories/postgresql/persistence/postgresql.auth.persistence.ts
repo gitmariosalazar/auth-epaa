@@ -1,5 +1,7 @@
+import { AuthSQLResult } from '../../../interfaces/sql/auth.sql.result';
+import { RefreshTokenSQLResult } from '../../../interfaces/sql/refresh-token.sql.result';
+import { DatabaseAbstract } from '../../../../../../shared/connections/database/abstract/abstract.database';
 import { Injectable } from '@nestjs/common';
-import { DatabaseServicePostgreSQL } from '../../../../../../shared/connections/database/postgresql/postgresql.service';
 import { InterfaceAuthRepository } from '../../../../domain/contracts/auth.interface.repository';
 import { AuthRequest } from '../../../../domain/schemas/dto/request/auth.request';
 import { AuthResponse } from '../../../../domain/schemas/dto/response/auth.response';
@@ -9,8 +11,10 @@ import { RefreshTokenModel } from '../../../../domain/schemas/models/refresh-tok
 
 @Injectable()
 export class PostgreSQLAuthPersistence implements InterfaceAuthRepository {
-  constructor(private readonly postgreSQLService: DatabaseServicePostgreSQL) {}
-  async findSessionByTokenHash(tokenHash: string): Promise<RefreshTokenModel | null> {
+  constructor(private readonly databaseService: DatabaseAbstract) {}
+  async findSessionByTokenHash(
+    tokenHash: string,
+  ): Promise<RefreshTokenModel | null> {
     try {
       const query = `
         SELECT 
@@ -28,10 +32,13 @@ export class PostgreSQLAuthPersistence implements InterfaceAuthRepository {
         FROM audit.usuario_refresh_tokens 
         WHERE token_hash = $1 AND revoked = FALSE AND expires_at > NOW()
       `;
-      const result = await this.postgreSQLService.query<any>(query, [tokenHash]);
-      
+      const result = await this.databaseService.query<RefreshTokenSQLResult>(
+        query,
+        [tokenHash],
+      );
+
       if (result.length === 0) return null;
-      
+
       const record = result[0];
       return new RefreshTokenModel({
         id: record.id,
@@ -39,12 +46,12 @@ export class PostgreSQLAuthPersistence implements InterfaceAuthRepository {
         tokenHash: record.token_hash,
         jti: record.jti,
         expiresAt: record.expires_at,
-        revoked: record.revoked,
+        revoked: Boolean(record.revoked),
         revokedAt: record.revoked_at,
         deviceInfo: record.device_info,
         ipAddress: record.ip_address,
         createdAt: record.created_at,
-        lastUsedAt: record.last_used_at,
+        lastUsedAt: record.last_used_at ?? new Date(),
       });
     } catch (error) {
       throw error;
@@ -58,12 +65,12 @@ export class PostgreSQLAuthPersistence implements InterfaceAuthRepository {
         SET revoked = TRUE, revoked_at = NOW() 
         WHERE usuario_id = $1 AND revoked = FALSE
       `;
-      await this.postgreSQLService.query(query, [userId]);
+      await this.databaseService.query<AuthSQLResult>(query, [userId]);
     } catch (error) {
       throw error;
     }
   }
-  
+
   async invalidateRefreshToken(jti: string): Promise<boolean> {
     try {
       const query = `
@@ -71,7 +78,7 @@ export class PostgreSQLAuthPersistence implements InterfaceAuthRepository {
         SET revoked = TRUE, revoked_at = NOW() 
         WHERE jti = $1 AND revoked = FALSE
       `;
-      await this.postgreSQLService.query(query, [jti]);
+      await this.databaseService.query<AuthSQLResult>(query, [jti]);
       return true;
     } catch (error) {
       throw error;
@@ -85,7 +92,7 @@ export class PostgreSQLAuthPersistence implements InterfaceAuthRepository {
           usuario_id, token_hash, jti, expires_at, ip_address, device_info
         ) VALUES ($1, $2, $3, $4, $5, $6)
       `;
-      await this.postgreSQLService.query(query, [
+      await this.databaseService.query<AuthSQLResult>(query, [
         refreshToken.getUserId(),
         refreshToken.getTokenHash(),
         refreshToken.getJti(),
@@ -106,7 +113,7 @@ export class PostgreSQLAuthPersistence implements InterfaceAuthRepository {
         SET last_used_at = $1 
         WHERE jti = $2
       `;
-      await this.postgreSQLService.query(query, [lastUsedAt, jti]);
+      await this.databaseService.query<AuthSQLResult>(query, [lastUsedAt, jti]);
     } catch (error) {
       throw error;
     }
@@ -125,4 +132,21 @@ export class PostgreSQLAuthPersistence implements InterfaceAuthRepository {
     throw new Error('Method not implemented.');
   }
 
+  async logAccess(
+    userId: string | null,
+    username: string,
+    event: string,
+    ip: string,
+    userAgent: string,
+    reason: string | null = null,
+  ): Promise<void> {
+    try {
+      await this.databaseService.query(
+        `SELECT audit.fn_registrar_acceso($1, $2, $3, $4, $5, $6)`,
+        [userId, username, event, ip, userAgent, reason],
+      );
+    } catch (error) {
+      console.error('Error logging access audit:', error);
+    }
+  }
 }

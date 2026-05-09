@@ -5,5 +5,5 @@ export interface AuthSQLResult {
   roles: string[];
   first_name: string;
   last_name: string;
-  is_active: boolean;
+  is_active: boolean | null | number;
 }

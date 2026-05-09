@@ -1,5 +1,5 @@
+import { DatabaseAbstract } from '../../../../../../shared/connections/database/abstract/abstract.database';
 import { Injectable } from '@nestjs/common';
-import { DatabaseServicePostgreSQL } from '../../../../../../shared/connections/database/postgresql/postgresql.service';
 import { InterfaceUserRepository } from '../../../../domain/contracts/user.interface.repository';
 import {
   UserResponse,
@@ -15,7 +15,7 @@ import {
 } from '../../../interfaces/sql/user.sql.result';
 import { RpcException } from '@nestjs/microservices';
 import { statusCode } from '../../../../../../settings/environments/status-code';
-import { UserAdapter } from '../adapters/user.adapter';
+import { UserAdapter } from '../../../adapters/user.adapter';
 import { UserModel } from '../../../../domain/schemas/models/user.model';
 import { Exists } from '../../../../../../shared/interfaces/verify-exists';
 import {
@@ -29,7 +29,7 @@ import {
 
 @Injectable()
 export class PostgreSQLUserPersistence implements InterfaceUserRepository {
-  constructor(private readonly postgreSQLService: DatabaseServicePostgreSQL) {}
+  constructor(private readonly databaseService: DatabaseAbstract) {}
   async getUsersByRoleId(roleId: number): Promise<UserResponse[]> {
     try {
       const query: string = `
@@ -49,7 +49,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [roleId];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
         query,
         params,
       );
@@ -141,7 +141,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [usernameOrEmail];
       const result =
-        await this.postgreSQLService.query<UserWithRolesAndPermissionsSQLResult>(
+        await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
           query,
           params,
         );
@@ -161,7 +161,6 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
   }
 
   async findByIdWithRolesAndPermissions(
-
     userId: string,
   ): Promise<UserResponseWithRolesAndPermissionsResponse | null> {
     try {
@@ -213,7 +212,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId];
       const result =
-        await this.postgreSQLService.query<UserWithRolesAndPermissionsSQLResult>(
+        await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
           query,
           params,
         );
@@ -231,7 +230,6 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       throw error;
     }
   }
-
 
   async findByEmail(email: string): Promise<UserResponse | null> {
     try {
@@ -251,7 +249,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [email];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
         query,
         params,
       );
@@ -290,7 +288,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<UserWithRolesSQLResult>(
         query,
         params,
       );
@@ -332,7 +330,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [username, email];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<any>(
         query,
         params,
       );
@@ -371,7 +369,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [token];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<UserSQLResult>(
         query,
         params,
       );
@@ -410,7 +408,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [username];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<UserSQLResult>(
         query,
         params,
       );
@@ -456,7 +454,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         user.getPasswordHash(),
       ];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<UserSQLResult>(
         query,
         params,
       );
@@ -486,7 +484,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId];
 
-      await this.postgreSQLService.query<void>(query, params);
+      await this.databaseService.execute(query, params);
     } catch (error) {
       throw error;
     }
@@ -501,7 +499,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [email];
 
-      const result = await this.postgreSQLService.query<Exists>(query, params);
+      const result = await this.databaseService.query<any>(query, params);
 
       return result[0].exists;
     } catch (error) {
@@ -518,7 +516,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [username];
 
-      const result = await this.postgreSQLService.query<Exists>(query, params);
+      const result = await this.databaseService.query<any>(query, params);
 
       return result[0].exists;
     } catch (error) {
@@ -538,7 +536,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [username, email];
 
-      const result = await this.postgreSQLService.query<Exists>(query, params);
+      const result = await this.databaseService.query<any>(query, params);
 
       return result[0].exists;
     } catch (error) {
@@ -555,7 +553,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId];
 
-      await this.postgreSQLService.query<void>(query, params);
+      await this.databaseService.query<any>(query, params);
     } catch (error) {
       throw error;
     }
@@ -570,7 +568,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId];
 
-      await this.postgreSQLService.query<void>(query, params);
+      await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(query, params);
     } catch (error) {
       throw error;
     }
@@ -595,7 +593,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
         query,
         params,
       );
@@ -652,7 +650,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         userId,
       ];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<any>(
         query,
         params,
       );
@@ -694,7 +692,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [username, password];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<UserSQLResult>(
         query,
         params,
       );
@@ -737,7 +735,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [hashedPassword, userId];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<UserSQLResult>(
         query,
         params,
       );
@@ -827,7 +825,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       const params = [limit, offset];
 
       const result =
-        await this.postgreSQLService.query<UserWithRolesAndPermissionsSQLResult>(
+        await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
           query,
           params,
         );
@@ -866,10 +864,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         assignPermissionToUserRequest.permissionId,
       ];
 
-      const result = await this.postgreSQLService.query<{
-        usuario_id: string;
-        permiso_id: number;
-      }>(query, params);
+      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(query, params);
 
       if (result.length === 0) {
         throw new RpcException({
@@ -898,10 +893,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         removePermissionFromUserRequest.permissionId,
       ];
 
-      const result = await this.postgreSQLService.query<{
-        usuario_id: string;
-        permiso_id: number;
-      }>(query, params);
+      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(query, params);
 
       if (result.length === 0) {
         throw new RpcException({
@@ -930,9 +922,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId, permissionId];
 
-      const result = await this.postgreSQLService.query<{
-        exists: boolean;
-      }>(query, params);
+      const result = await this.databaseService.query<any>(query, params);
 
       if (result.length === 0) {
         throw new RpcException({
@@ -966,7 +956,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [permissionId];
 
-      const result = await this.postgreSQLService.query<UserSQLResult>(
+      const result = await this.databaseService.query<any>(
         query,
         params,
       );
@@ -1016,7 +1006,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       const params = [userId];
 
       const result =
-        await this.postgreSQLService.query<UserWithPermissionsSQLResult>(
+        await this.databaseService.query<UserWithPermissionsSQLResult>(
           query,
           params,
         );
@@ -1055,10 +1045,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         assignRoleToUserRequest.roleId,
       ];
 
-      const result = await this.postgreSQLService.query<{
-        usuario_id: string;
-        rol_id: number;
-      }>(query, params);
+      const result = await this.databaseService.query<any>(query, params);
 
       if (result.length === 0) {
         throw new RpcException({
@@ -1087,10 +1074,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         removeRoleFromUserRequest.roleId,
       ];
 
-      const result = await this.postgreSQLService.query<{
-        usuario_id: string;
-        rol_id: number;
-      }>(query, params);
+      const result = await this.databaseService.query<UserSQLResult>(query, params);
 
       if (result.length === 0) {
         throw new RpcException({
@@ -1116,9 +1100,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId, roleId];
 
-      const result = await this.postgreSQLService.query<{
-        exists: boolean;
-      }>(query, params);
+      const result = await this.databaseService.query<any>(query, params);
 
       if (result.length === 0) {
         throw new RpcException({
@@ -1160,7 +1142,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId];
 
-      const result = await this.postgreSQLService.query<UserWithRolesSQLResult>(
+      const result = await this.databaseService.query<UserWithRolesSQLResult>(
         query,
         params,
       );
@@ -1218,7 +1200,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       const params = [userId];
 
       const result =
-        await this.postgreSQLService.query<UserWithRolesAndPermissionsSQLResult>(
+        await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
           query,
           params,
         );

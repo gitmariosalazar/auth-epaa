@@ -25,8 +25,8 @@ export interface UserSQLResult {
   registered_at: Date;
   last_login?: Date | null;
   failed_attempts?: number;
-  two_factor_enabled?: boolean;
-  is_active: boolean;
+  two_factor_enabled?: boolean | null | number;
+  is_active: boolean | null | number;
   observations?: string | null;
 }
 

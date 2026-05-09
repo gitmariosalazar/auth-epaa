@@ -1,18 +1,18 @@
+import { DatabaseAbstract } from '../../../../../../shared/connections/database/abstract/abstract.database';
 import { Injectable } from '@nestjs/common';
-import { DatabaseServicePostgreSQL } from '../../../../../../shared/connections/database/postgresql/postgresql.service';
 import { InterfaceCategoryRepository } from '../../../../domain/contracts/category.interface.repository';
 import { CategoryResponse } from '../../../../domain/schemas/dto/response/category.response';
 import { CategoryModel } from '../../../../domain/schemas/models/category.model';
 import { CategorySqlResponse } from '../../../interfaces/sql/category.sql.response';
 import { RpcException } from '@nestjs/microservices';
 import { statusCode } from '../../../../../../settings/environments/status-code';
-import { CategoryPostgreSqlAdapter } from '../adapters/category.adapter';
+import { CategoryAdapter } from '../../../adapters/category.adapter';
 import { Exists } from '../../../../../../shared/interfaces/verify-exists';
 
 @Injectable()
 export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepository {
   // Implement repository methods here
-  constructor(private readonly postgreSQLService: DatabaseServicePostgreSQL) {}
+  constructor(private readonly databaseService: DatabaseAbstract) {}
 
   async createCategory(
     category: CategoryModel,
@@ -32,7 +32,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
         category.getActiveStatus(),
       ];
 
-      const result = await this.postgreSQLService.query<CategorySqlResponse>(
+      const result = await this.databaseService.query<CategorySqlResponse>(
         query,
         params,
       );
@@ -45,7 +45,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       }
 
       const createdCategory: CategoryResponse =
-        CategoryPostgreSqlAdapter.fromCategorySqlResponseToCategoryResponse(
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
           result[0],
         );
 
@@ -78,7 +78,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
         categoryId,
       ];
 
-      const result = await this.postgreSQLService.query<CategorySqlResponse>(
+      const result = await this.databaseService.query<CategorySqlResponse>(
         query,
         params,
       );
@@ -91,7 +91,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       }
 
       const updatedCategory: CategoryResponse =
-        CategoryPostgreSqlAdapter.fromCategorySqlResponseToCategoryResponse(
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
           result[0],
         );
 
@@ -114,7 +114,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       `;
       const params = [categoryId];
 
-      const result = await this.postgreSQLService.query<CategorySqlResponse>(
+      const result = await this.databaseService.query<CategorySqlResponse>(
         query,
         params,
       );
@@ -127,7 +127,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       }
 
       const category: CategoryResponse =
-        CategoryPostgreSqlAdapter.fromCategorySqlResponseToCategoryResponse(
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
           result[0],
         );
 
@@ -154,13 +154,13 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       `;
       const params = [limit, offset];
 
-      const result = await this.postgreSQLService.query<CategorySqlResponse>(
+      const result = await this.databaseService.query<CategorySqlResponse>(
         query,
         params,
       );
 
       const categories: CategoryResponse[] = result.map((categorySql) =>
-        CategoryPostgreSqlAdapter.fromCategorySqlResponseToCategoryResponse(
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
           categorySql,
         ),
       );
@@ -178,11 +178,11 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
           SELECT 1
           FROM permiso_categoria
           WHERE nombre = $1
-        );
+        ) AS "exists";
       `;
       const params = [categoryName];
 
-      const result = await this.postgreSQLService.query<Exists>(query, params);
+      const result = await this.databaseService.query<Exists>(query, params);
 
       return result[0].exists;
     } catch (error) {
@@ -198,9 +198,9 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       `;
       const params: number[] = [categoryId];
 
-      const result = await this.postgreSQLService.query(query, params);
+      const result = await this.databaseService.execute(query, params);
       console.log('Delete result Pers:', result);
-      return result.length > 0;
+      return result && result.affectedRows > 0;
     } catch (error) {
       throw error;
     }
@@ -219,13 +219,13 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       `;
       const params = [`%${term}%`];
 
-      const result = await this.postgreSQLService.query<CategorySqlResponse>(
+      const result = await this.databaseService.query<CategorySqlResponse>(
         query,
         params,
       );
 
       return result.map((categorySql) =>
-        CategoryPostgreSqlAdapter.fromCategorySqlResponseToCategoryResponse(
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
           categorySql,
         ),
       );

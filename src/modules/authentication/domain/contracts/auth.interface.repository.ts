@@ -31,6 +31,8 @@ export interface InterfaceAuthRepository {
   initiatePasswordReset(email: string): Promise<void>;
   resetPassword(token: string, newPassword: string): Promise<void>;
 
+  // Audit
+  logAccess(userId: string | null, username: string, event: string, ip: string, userAgent: string, reason?: string | null): Promise<void>;
 
   // 2FA (opcional pero recomendado)
   /*

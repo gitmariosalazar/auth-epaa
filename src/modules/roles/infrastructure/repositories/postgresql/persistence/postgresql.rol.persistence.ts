@@ -1,17 +1,17 @@
+import { DatabaseAbstract } from '../../../../../../shared/connections/database/abstract/abstract.database';
 import { Injectable } from '@nestjs/common';
-import { DatabaseServicePostgreSQL } from '../../../../../../shared/connections/database/postgresql/postgresql.service';
 import { InterfaceRolRepository } from '../../../../domain/contracts/rol.interface.repository';
 import { RolResponse } from '../../../../domain/schemas/dto/response/rol.response';
 import { RolSQLResponse } from '../../../interfaces/sql/rol.sql.response';
 import { RpcException } from '@nestjs/microservices';
 import { statusCode } from '../../../../../../settings/environments/status-code';
-import { RolAdapter } from '../adapters/rol.adapters';
 import { RolModel } from '../../../../domain/schemas/models/rol.model';
+import { RolAdapter } from '../../../adapters/rol.adapters';
 
 @Injectable()
 export class RolPostgreSQLPersistence implements InterfaceRolRepository {
   // Implement repository methods here
-  constructor(private readonly postgreSQLService: DatabaseServicePostgreSQL) {}
+  constructor(private readonly databaseService: DatabaseAbstract) {}
 
   async getRolById(rolId: number): Promise<RolResponse | null> {
     try {
@@ -28,7 +28,7 @@ export class RolPostgreSQLPersistence implements InterfaceRolRepository {
       `;
       const params = [rolId];
 
-      const result = await this.postgreSQLService.query<RolSQLResponse>(
+      const result = await this.databaseService.query<RolSQLResponse>(
         query,
         params,
       );
@@ -66,7 +66,7 @@ export class RolPostgreSQLPersistence implements InterfaceRolRepository {
       `;
       const params = [limit, offset];
 
-      const result = await this.postgreSQLService.query<RolSQLResponse>(
+      const result = await this.databaseService.query<RolSQLResponse>(
         query,
         params,
       );
@@ -100,7 +100,7 @@ export class RolPostgreSQLPersistence implements InterfaceRolRepository {
         rolModel.getIsActive(),
       ];
 
-      const result = await this.postgreSQLService.query<RolSQLResponse>(
+      const result = await this.databaseService.query<RolSQLResponse>(
         query,
         params,
       );
@@ -148,7 +148,7 @@ export class RolPostgreSQLPersistence implements InterfaceRolRepository {
         rolId,
       ];
 
-      const result = await this.postgreSQLService.query<RolSQLResponse>(
+      const result = await this.databaseService.query<RolSQLResponse>(
         query,
         params,
       );
@@ -184,7 +184,7 @@ export class RolPostgreSQLPersistence implements InterfaceRolRepository {
       `;
       const params = [name];
 
-      const result = await this.postgreSQLService.query<RolSQLResponse>(
+      const result = await this.databaseService.query<RolSQLResponse>(
         query,
         params,
       );
@@ -206,7 +206,7 @@ export class RolPostgreSQLPersistence implements InterfaceRolRepository {
       `;
       const params = [name];
 
-      const result = await this.postgreSQLService.query(query, params);
+      const result = await this.databaseService.query<RolSQLResponse>(query, params);
 
       return result.length > 0;
     } catch (error) {

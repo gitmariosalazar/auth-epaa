@@ -16,7 +16,7 @@ export interface UserEmployeeSQLResult {
   supervisor_id: string | null;
   assigned_zones: number[];
   driver_license: string | null;
-  has_company_vehicle: boolean;
+  has_company_vehicle: boolean | null | number;
   internal_phone: string | null;
   internal_email: string | null;
   photo_url: string | null;

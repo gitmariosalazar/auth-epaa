@@ -1,0 +1,218 @@
+import { DatabaseAbstract } from '../../../../../../shared/connections/database/abstract/abstract.database';
+import { Injectable } from '@nestjs/common';
+import { InterfaceRolPermissionRepository } from '../../../../domain/contracts/rol-permission.interface.repository';
+import { RolPermissionResponse } from '../../../../domain/schemas/dto/response/rol-permission.response';
+import { RolPermissionModel } from '../../../../domain/schemas/models/rol-permission.model';
+import { RolPermissionSQLResult } from '../../../interfaces/sql/rol-permission.sql.result';
+import { RpcException } from '@nestjs/microservices';
+import { statusCode } from '../../../../../../settings/environments/status-code';
+import { RolPermissionAdapter } from '../../../adapters/rol-permission.adapter';
+
+@Injectable()
+export class RolPermissionMySQLPersistence
+  implements InterfaceRolPermissionRepository
+{
+  constructor(private readonly databaseService: DatabaseAbstract) {}
+
+  async createRolPermission(
+    rolPermission: RolPermissionModel,
+  ): Promise<RolPermissionResponse | null> {
+    try {
+      const query = `
+        INSERT INTO rol_permisos (rol_id, permiso_id)
+        VALUES (?, ?);
+      `;
+
+      const params = [
+        rolPermission.getRolId(),
+        rolPermission.getPermissionId(),
+      ];
+
+      const result = await this.databaseService.execute(query, params);
+
+      if (result.affectedRows === 0) {
+        throw new RpcException({
+          statusCode: statusCode.INTERNAL_SERVER_ERROR,
+          message: 'Failed to create rol-permission',
+        });
+      }
+
+      const rows = await this.databaseService
+        .getClient()
+        .then((c) =>
+          c
+            .query<RolPermissionSQLResult>(
+              'SELECT rol_permiso_id AS rol_permission_id, rol_id AS rol_id, permiso_id AS permission_id FROM rol_permisos WHERE rol_permiso_id = ?',
+              [result.insertId],
+            )
+            .finally(() => c.release()),
+        );
+
+      const createdRolPermission: RolPermissionResponse =
+        RolPermissionAdapter.fromRolPermissionSQLResultToRolPermissionResponse(
+          rows[0],
+        );
+
+      return createdRolPermission;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateRolPermission(
+    rolPermissionId: number,
+    rolPermission: RolPermissionModel,
+  ): Promise<RolPermissionResponse | null> {
+    try {
+      const query = `
+        UPDATE rol_permisos
+        SET rol_id = ?, permiso_id = ?
+        WHERE rol_permiso_id = ?;
+      `;
+      const params = [
+        rolPermission.getRolId(),
+        rolPermission.getPermissionId(),
+        rolPermissionId,
+      ];
+
+      const result = await this.databaseService.execute(query, params);
+
+      if (result.affectedRows === 0) {
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'Rol-Permission not found',
+        });
+      }
+
+      const rows = await this.databaseService
+        .getClient()
+        .then((c) =>
+          c
+            .query<RolPermissionSQLResult>(
+              'SELECT rol_permiso_id AS rol_permission_id, rol_id AS rol_id, permiso_id AS permission_id FROM rol_permisos WHERE rol_permiso_id = ?',
+              [rolPermissionId],
+            )
+            .finally(() => c.release()),
+        );
+
+      const updatedRolPermission: RolPermissionResponse =
+        RolPermissionAdapter.fromRolPermissionSQLResultToRolPermissionResponse(
+          rows[0],
+        );
+
+      return updatedRolPermission;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteRolPermission(rolPermissionId: number): Promise<boolean> {
+    try {
+      const query = `
+        DELETE FROM rol_permisos
+        WHERE rol_permiso_id = ?;
+      `;
+      const params = [rolPermissionId];
+
+      const result = await this.databaseService.execute(query, params);
+
+      if (result.affectedRows === 0) {
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'Rol-Permission not found',
+        });
+      }
+
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async verifyRolPermissionExists(
+    rolId: number,
+    permissionId: number,
+  ): Promise<boolean> {
+    try {
+      const query = `
+        SELECT EXISTS (
+          SELECT 1
+          FROM rol_permisos
+          WHERE rol_id = ? AND permiso_id = ?
+        ) AS \`exists\`;
+      `;
+      const params = [rolId, permissionId];
+
+      const result = await this.databaseService.query<any>(query, params);
+
+      return Boolean(result[0].exists);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getRolPermissionById(
+    rolPermissionId: number,
+  ): Promise<RolPermissionResponse | null> {
+    try {
+      const query = `
+        SELECT 
+          rol_permiso_id AS "rol_permission_id",
+          rol_id AS "rol_id",
+          permiso_id AS "permission_id"
+        FROM rol_permisos
+        WHERE rol_permiso_id = ?;
+      `;
+      const params = [rolPermissionId];
+
+      const result = await this.databaseService.query<RolPermissionSQLResult>(
+        query,
+        params,
+      );
+
+      if (result.length === 0) {
+        return null;
+      }
+
+      const rolPermission: RolPermissionResponse =
+        RolPermissionAdapter.fromRolPermissionSQLResultToRolPermissionResponse(
+          result[0],
+        );
+
+      return rolPermission;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getAllRolPermissions(
+    limit: number,
+    offset: number,
+  ): Promise<RolPermissionResponse[]> {
+    try {
+      const query = `
+        SELECT 
+          rol_permiso_id AS "rol_permission_id",
+          rol_id AS "rol_id",
+          permiso_id AS "permission_id"
+        FROM rol_permisos
+        ORDER BY rol_permiso_id
+        LIMIT ? OFFSET ?;
+      `;
+      const params = [Number(limit), Number(offset)];
+
+      const result = await this.databaseService.query<RolPermissionSQLResult>(
+        query,
+        params,
+      );
+
+      return result.map((rolPermissionSQL) =>
+        RolPermissionAdapter.fromRolPermissionSQLResultToRolPermissionResponse(
+          rolPermissionSQL,
+        ),
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+}

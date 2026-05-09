@@ -3,6 +3,6 @@ export interface RolSQLResponse {
   name: string;
   description?: string;
   parent_rol_id?: number;
-  is_active: boolean;
+  is_active: boolean | null | number;
   creation_date: Date;
 }

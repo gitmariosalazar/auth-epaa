@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { environments } from './settings/environments/environments';
 import * as morgan from 'morgan';
-import { DatabaseServicePostgreSQL } from './shared/connections/database/postgresql/postgresql.service';
+import { DatabaseAbstract } from './shared/connections/database/abstract/abstract.database';
 
 async function bootstrap() {
   const logger: Logger = new Logger('QRCodeMain');
@@ -13,10 +13,7 @@ async function bootstrap() {
 
   app.use(morgan('dev'));
 
-  const postgresqlService: DatabaseServicePostgreSQL =
-    new DatabaseServicePostgreSQL();
-
-  const dbService = app.get(DatabaseServicePostgreSQL);
+  const dbService = app.get(DatabaseAbstract);
   logger.log(await dbService.connect());
 
   const kafkaApp = await NestFactory.createMicroservice<MicroserviceOptions>(
