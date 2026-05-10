@@ -1,13 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { MicroserviceOptions } from '@nestjs/microservices';
+import { CustomServerKafka } from './shared/kafka/custom-server-kafka';
 import { environments } from './settings/environments/environments';
 import * as morgan from 'morgan';
 import { DatabaseAbstract } from './shared/connections/database/abstract/abstract.database';
 
 async function bootstrap() {
-  const logger: Logger = new Logger('QRCodeMain');
+  const logger: Logger = new Logger('SecurityMain');
 
   const app = await NestFactory.create(AppModule);
 
@@ -19,19 +20,20 @@ async function bootstrap() {
   const kafkaApp = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
-      transport: Transport.KAFKA,
-      options: {
-        client: {
-          clientId: environments.AUTHENTICATION_KAFKA_CLIENT_ID, // this is the pure consumer
-          brokers: [environments.KAFKA_BROKER_URL],
+      strategy: new CustomServerKafka(
+        {
+          client: {
+            clientId: environments.AUTHENTICATION_KAFKA_CLIENT_ID,
+            brokers: [environments.KAFKA_BROKER_URL],
+          },
+          consumer: {
+            groupId: environments.AUTHENTICATION_KAFKA_GROUP_ID,
+            allowAutoTopicCreation: true,
+            retry: { retries: 5 },
+          },
         },
-        consumer: {
-          groupId: environments.AUTHENTICATION_KAFKA_GROUP_ID, // main consumption group
-          allowAutoTopicCreation: true,
-          // Optional: retry if Kafka goes down
-          retry: { retries: 5 },
-        },
-      },
+        environments.KAFKA_TOPIC
+      ),
     },
   );
 
