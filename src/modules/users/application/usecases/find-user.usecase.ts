@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InterfaceUserRepository } from '../../domain/contracts/user.interface.repository';
 import {
+  CustomerWithRolesAndPermissionsResponse,
   UserResponse,
   UserResponseWithRolesAndPermissionsResponse,
 } from '../../domain/schemas/dto/response/user.response';
@@ -106,6 +107,19 @@ export class FindUserUseCase {
       throw new UserDomainException('Username or Email is required');
     const user =
       await this.userRepository.findByUsernameOrEmailWithRolesAndPermissions(
+        usernameOrEmail,
+      );
+    if (!user) throw new UserNotFoundException(usernameOrEmail);
+    return user;
+  }
+
+  async getCustomerProfile(
+    usernameOrEmail: string,
+  ): Promise<CustomerWithRolesAndPermissionsResponse> {
+    if (!usernameOrEmail)
+      throw new UserDomainException('Username or Email is required');
+    const user =
+      await this.userRepository.findCustomerByUsernameOrEmailWithRolesAndPermissions(
         usernameOrEmail,
       );
     if (!user) throw new UserNotFoundException(usernameOrEmail);

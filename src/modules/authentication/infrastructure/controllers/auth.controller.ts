@@ -6,6 +6,8 @@ import { LoginUseCase } from '../../application/usecases/login.usecase';
 import { LogoutUseCase } from '../../application/usecases/logout.usecase';
 import { RefreshTokenUseCase } from '../../application/usecases/refresh-token.usecase';
 import { VerifyUserUseCase } from '../../application/usecases/verify-user.usecase';
+import { ClientLoginUseCase } from '../../application/usecases/client-login.usecase';
+import { ClientAuthRequest } from '../../domain/schemas/dto/request/client-auth.request';
 import { AuthDomainException } from '../../domain/exceptions/auth.exceptions';
 import { statusCode } from '../../../../settings/environments/status-code';
 
@@ -16,6 +18,7 @@ export class AuthController {
     private readonly logoutUseCase: LogoutUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
     private readonly verifyUserUseCase: VerifyUserUseCase,
+    private readonly clientLoginUseCase: ClientLoginUseCase,
   ) {}
 
 
@@ -38,6 +41,15 @@ export class AuthController {
   async authenticateUser(@Payload() payload: AuthRequest) {
     try {
       return await this.loginUseCase.execute(payload);
+    } catch (error) {
+      this.handleException(error);
+    }
+  }
+
+  @MessagePattern('authentication.auth.client.signin')
+  async authenticateClient(@Payload() payload: ClientAuthRequest) {
+    try {
+      return await this.clientLoginUseCase.execute(payload);
     } catch (error) {
       this.handleException(error);
     }

@@ -49,12 +49,12 @@ export class LoginUseCase {
     if (!user) {
       const ctx = AuditContextStorage.getContext();
       await this.authRepository.logAccess(
-        null, 
-        authRequest.username_or_email, 
-        'LOGIN_FAILED', 
-        ctx?.ip || '0.0.0.0', 
-        ctx?.userAgent || 'N/A', 
-        'Usuario no existe'
+        null,
+        authRequest.username_or_email,
+        'LOGIN_FAILED',
+        ctx?.ip || '0.0.0.0',
+        ctx?.userAgent || 'N/A',
+        'Usuario no existe',
       );
       throw new InvalidCredentialsException();
     }
@@ -67,12 +67,12 @@ export class LoginUseCase {
     if (!passwordMatches) {
       const ctx = AuditContextStorage.getContext();
       await this.authRepository.logAccess(
-        null, 
-        authRequest.username_or_email, 
-        'LOGIN_FAILED', 
-        ctx?.ip || '0.0.0.0', 
-        ctx?.userAgent || 'N/A', 
-        'Contraseña incorrecta'
+        null,
+        authRequest.username_or_email,
+        'LOGIN_FAILED',
+        ctx?.ip || '0.0.0.0',
+        ctx?.userAgent || 'N/A',
+        'Contraseña incorrecta',
       );
       throw new InvalidCredentialsException();
     }
@@ -93,12 +93,19 @@ export class LoginUseCase {
 
     const refreshToken = uuidv4();
     const jti = uuidv4();
-    const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    const refreshTokenExpiresInSeconds = parseExpirationToSeconds(environments.JWT_REFRESH_EXPIRATION);
-    const expiresAt = new Date(Date.now() + refreshTokenExpiresInSeconds * 1000);
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+    const refreshTokenExpiresInSeconds = parseExpirationToSeconds(
+      environments.JWT_REFRESH_EXPIRATION,
+    );
+    const expiresAt = new Date(
+      Date.now() + refreshTokenExpiresInSeconds * 1000,
+    );
 
     const ctx = AuditContextStorage.getContext();
-    
+
     const createRefreshTokenDto = new CreateRefreshTokenRequest();
     createRefreshTokenDto.userId = user.userId;
     createRefreshTokenDto.expiresInSeconds = refreshTokenExpiresInSeconds;
@@ -116,11 +123,11 @@ export class LoginUseCase {
     await this.authRepository.storeRefreshToken(refreshTokenModel);
 
     await this.authRepository.logAccess(
-      user.userId, 
-      user.username, 
+      user.userId,
+      user.username,
       'LOGIN',
       ctx?.ip || '0.0.0.0',
-      ctx?.userAgent || 'N/A'
+      ctx?.userAgent || 'N/A',
     );
 
     return AuthMapper.fromUserWithRolesAndPermissionsToUserResponse(
@@ -129,6 +136,4 @@ export class LoginUseCase {
       accessToken,
     );
   }
-
-
 }

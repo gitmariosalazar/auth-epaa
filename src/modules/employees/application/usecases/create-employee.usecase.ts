@@ -8,6 +8,7 @@ import {
 } from '../../domain/exceptions/employee.exceptions';
 import { UserEmployeeMapper } from '../mappers/user-employee.mapper';
 import { validateFields } from '../../../../shared/validators/fields.validators';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class CreateEmployeeUseCase {
@@ -32,11 +33,13 @@ export class CreateEmployeeUseCase {
       throw new EmployeeDomainException(missingFieldsMessages.join(', '));
     }
 
-    const exists = await this.userEmployeeRepository.existsByUserId(
-      request.userId,
-    );
-    if (exists) {
-      throw new EmployeeAlreadyExistsException(`User ID ${request.userId}`);
+    if (request.userId) {
+      const exists = await this.userEmployeeRepository.existsByUserId(
+        request.userId,
+      );
+      if (exists) {
+        throw new EmployeeAlreadyExistsException(`User ID ${request.userId}`);
+      }
     }
 
     const employeeModel =
@@ -45,8 +48,19 @@ export class CreateEmployeeUseCase {
         request.userId,
       );
 
+    let securityData: { username?: string; email?: string; passwordHash?: string } | undefined;
+
+    if (request.username && request.email && request.password) {
+      const passwordHash = await bcrypt.hash(request.password, 10);
+      securityData = {
+        username: request.username,
+        email: request.email,
+        passwordHash,
+      };
+    }
+
     const createdEmployee =
-      await this.userEmployeeRepository.create(employeeModel);
+      await this.userEmployeeRepository.create(employeeModel, securityData);
     if (!createdEmployee) {
       throw new EmployeeDomainException('Failed to create employee');
     }

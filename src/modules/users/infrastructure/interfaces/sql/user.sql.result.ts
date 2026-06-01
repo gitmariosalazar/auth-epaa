@@ -43,3 +43,59 @@ export interface UserWithPermissionsSQLResult extends UserSQLResult {
 export interface UserWithRolesSQLResult extends UserSQLResult {
   roles: string[]; // Comma-separated roles
 }
+
+export interface PhoneSqlResponse {
+  telefono_id: number;
+  numero: string;
+}
+
+export interface EmailSqlResponse {
+  correo_electronico_id: number;
+  correo: string;
+}
+
+export interface ClientSqlResponse {
+  address: string;
+  country: string;
+  gender_id: number;
+  last_name: string;
+  parish_id: string;
+  person_id: string;
+  birth_date: string;
+  first_name: string;
+  is_deceased: boolean | null | number;
+  profession_id: number;
+  civil_status_id: number;
+  phones: PhoneSqlResponse[];
+  emails: EmailSqlResponse[];
+}
+
+export interface CompanySqlResponse {
+  ruc: string;
+  address: string;
+  country: string;
+  client_id: string;
+  parish_id: string;
+  company_id: number;
+  business_name: string;
+  commercial_name: string;
+  phones: PhoneSqlResponse[];
+  emails: EmailSqlResponse[];
+}
+
+export interface CustomerWithRolesAndPermissionsSQLResult {
+  user_id: string;
+  username: string;
+  email: string;
+  registered_at: Date;
+  last_login?: Date | null;
+  failed_attempts?: number;
+  two_factor_enabled?: boolean | null | number;
+  is_active: boolean | null | number;
+  observations?: string | null;
+  password_hash?: string | null;
+  company: CompanySqlResponse | null;
+  person: ClientSqlResponse | null;
+  roles: string[];
+  permissions: string[];
+}

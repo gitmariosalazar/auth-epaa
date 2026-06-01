@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { KafkaServiceModule } from '../../../../../shared/kafka/kafka-service.module';
 import { AuthController } from '../../controllers/auth.controller';
 import { PostgreSQLAuthPersistence } from '../../repositories/postgresql/persistence/postgresql.auth.persistence';
+import { PostgreSQLClientAuthPersistence } from '../../repositories/postgresql/persistence/postgresql.client-auth.persistence';
 import { environments } from '../../../../../settings/environments/environments';
 import { JwtModule } from '@nestjs/jwt';
 import { PostgreSQLUserPersistence } from '../../../../users/infrastructure/repositories/postgresql/persistence/postgresql.user.persistence';
@@ -10,6 +11,7 @@ import { ValidateUserUseCase } from '../../../application/usecases/validate-user
 import { VerifyUserUseCase } from '../../../application/usecases/verify-user.usecase';
 import { RefreshTokenUseCase } from '../../../application/usecases/refresh-token.usecase';
 import { LogoutUseCase } from '../../../application/usecases/logout.usecase';
+import { ClientLoginUseCase } from '../../../application/usecases/client-login.usecase';
 
 @Module({
   imports: [
@@ -21,12 +23,12 @@ import { LogoutUseCase } from '../../../application/usecases/logout.usecase';
     })],
   controllers: [AuthController],
   providers: [
-    
     LoginUseCase,
     ValidateUserUseCase,
     VerifyUserUseCase,
     RefreshTokenUseCase,
     LogoutUseCase,
+    ClientLoginUseCase,
     {
       provide: 'AuthRepository',
       useClass: PostgreSQLAuthPersistence,
@@ -34,6 +36,10 @@ import { LogoutUseCase } from '../../../application/usecases/logout.usecase';
     {
       provide: 'UserRepository',
       useClass: PostgreSQLUserPersistence,
+    },
+    {
+      provide: 'ClientAuthRepository',
+      useClass: PostgreSQLClientAuthPersistence,
     }],
   exports: [],
 })

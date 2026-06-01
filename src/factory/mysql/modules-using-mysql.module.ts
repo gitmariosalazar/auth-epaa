@@ -7,6 +7,7 @@ import { MySQLUserModule } from '../../modules/users/infrastructure/modules/mysq
 import { MySQLUserEmployeeModule } from '../../modules/employees/infrastructure/modules/mysql/mysql.use-employee.module';
 import { MySQLAuthModule } from '../../modules/authentication/infrastructure/modules/mysql/mysql.auth.module';
 import { MySQLAuditModule } from '../../modules/audit/infrastructure/modules/mysql/mysql.audit.module';
+import { MySQLCustomerModule } from '../../modules/customers/infrastructure/modules/mysql/mysql.customer.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MySQLAuditModule } from '../../modules/audit/infrastructure/modules/mys
     MySQLUserEmployeeModule,
     MySQLAuthModule,
     MySQLAuditModule,
+    MySQLCustomerModule,
   ],
   controllers: [],
   providers: [],

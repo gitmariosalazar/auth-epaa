@@ -4,6 +4,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InterfaceAuthRepository } from '../../domain/contracts/auth.interface.repository';
 import { InterfaceUserRepository } from '../../../users/domain/contracts/user.interface.repository';
+import { InterfaceClientAuthRepository } from '../../domain/contracts/client-auth.interface.repository';
+import { ClientUserModel } from '../../domain/schemas/models/client-user.model';
 import { RefreshTokenRequest } from '../../domain/schemas/dto/request/refresh-token.request';
 import { AuthResponse } from '../../domain/schemas/dto/response/auth.response';
 import { AuthDomainException, InvalidCredentialsException, TokenExpiredException } from '../../domain/exceptions/auth.exceptions';
@@ -21,6 +23,8 @@ export class RefreshTokenUseCase {
     private readonly authRepository: InterfaceAuthRepository,
     @Inject('UserRepository')
     private readonly userRepository: InterfaceUserRepository,
+    @Inject('ClientAuthRepository')
+    private readonly clientAuthRepository: InterfaceClientAuthRepository,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -48,20 +52,41 @@ export class RefreshTokenUseCase {
       throw new TokenExpiredException();
     }
 
-    // Get user details (including roles and permissions for the new access token)
-    const user = await this.userRepository.findByIdWithRolesAndPermissions(session.getUserId());
-    if (!user || !user.isActive) {
-      throw new InvalidCredentialsException();
+    // Get user details (try employees first, then clients)
+    let user = await this.userRepository.findByIdWithRolesAndPermissions(session.getUserId());
+    let isClient = false;
+    let clientUser: ClientUserModel | null = null;
+
+    if (!user) {
+      clientUser = await this.clientAuthRepository.findClientById(session.getUserId());
+      if (!clientUser || !clientUser.isActive) {
+        throw new InvalidCredentialsException();
+      }
+      isClient = true;
+    } else {
+      if (!user.isActive) {
+        throw new InvalidCredentialsException();
+      }
     }
 
-    // Generate new Access Token
-    const payload = {
-      sub: user.userId,
-      username: user.username,
-      email: user.email,
-      roles: user.roles,
-      permissions: user.permissions,
-    };
+    // Generate new Access Token payload
+    let payload;
+    if (isClient && clientUser) {
+      payload = {
+        sub: clientUser.clientUserId,
+        cliente_id: clientUser.clienteId,
+        email: clientUser.email,
+        user_type: 'customer',
+      };
+    } else {
+      payload = {
+        sub: user!.userId,
+        username: user!.username,
+        email: user!.email,
+        roles: user!.roles,
+        permissions: user!.permissions,
+      };
+    }
 
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: environments.JWT_SECRET,
@@ -83,7 +108,7 @@ export class RefreshTokenUseCase {
 
     const ctx = AuditContextStorage.getContext();
     const createRefreshTokenDto = new CreateRefreshTokenRequest();
-    createRefreshTokenDto.userId = user.userId;
+    createRefreshTokenDto.userId = isClient ? clientUser!.clientUserId : user!.userId;
 
     createRefreshTokenDto.expiresInSeconds = refreshTokenExpiresInSeconds;
     createRefreshTokenDto.deviceInfo = ctx?.userAgent || 'Unknown Device';
@@ -99,12 +124,28 @@ export class RefreshTokenUseCase {
 
     await this.authRepository.storeRefreshToken(newRefreshTokenModel);
 
-    // 3. Return both new tokens
+    // 3. Return both new tokens with proper structures
+    if (isClient && clientUser) {
+      return {
+        accessToken,
+        refreshToken: newRefreshToken,
+        user: {
+          userId: clientUser.clientUserId,
+          username: clientUser.email,
+          email: clientUser.email,
+          roles: [],
+          permissions: [],
+          firstName: clientUser.firstName || 'Sin Nombre',
+          lastName: clientUser.lastName || 'Sin Apellido',
+          isActive: clientUser.isActive,
+        }
+      } as any;
+    }
+
     return AuthMapper.fromUserWithRolesAndPermissionsToUserResponse(
-      user,
+      user!,
       newRefreshToken,
       accessToken,
     );
   }
 }
-

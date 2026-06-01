@@ -2,12 +2,14 @@ import { DatabaseAbstract } from '../../../../../../shared/connections/database/
 import { Injectable } from '@nestjs/common';
 import { InterfaceUserRepository } from '../../../../domain/contracts/user.interface.repository';
 import {
+  CustomerWithRolesAndPermissionsResponse,
   UserResponse,
   UserResponseWithPermissionsResponse,
   UserResponseWithRolesAndPermissionsResponse,
   UserResponseWithRolesResponse,
 } from '../../../../domain/schemas/dto/response/user.response';
 import {
+  CustomerWithRolesAndPermissionsSQLResult,
   UserSQLResult,
   UserWithPermissionsSQLResult,
   UserWithRolesAndPermissionsSQLResult,
@@ -156,6 +158,79 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
           result[0],
         );
 
+      return userResponse;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async findCustomerByUsernameOrEmailWithRolesAndPermissions(
+    usernameOrEmail: string,
+  ): Promise<CustomerWithRolesAndPermissionsResponse | null> {
+    try {
+      const query: string = `
+        SELECT
+            u.usuario_id        AS "user_id",
+            u.username          AS "username",
+            u.email             AS "email",
+            e.nombres           AS "first_name",
+            e.apellidos         AS "last_name",
+            u.fecha_registro    AS "registered_at",
+            u.last_login        AS "last_login",
+            u.failed_attempts   AS "failed_attempts",
+            u.two_factor_enabled,
+            u.activo            AS "is_active",
+            u.observaciones     AS "observations",
+            u.password_hash     AS "password_hash",
+            -- Roles (using JSON_ARRAYAGG + subquery)
+            COALESCE(
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre))
+                FROM usuario_roles ur2
+                JOIN roles r ON r.rol_id = ur2.rol_id
+                WHERE ur2.usuario_id = u.usuario_id),
+                JSON_ARRAY()
+            ) AS roles,   -- cast back to json if your app expects json (not jsonb)
+            -- Permissions: union + deduplicate before aggregation
+            COALESCE(
+
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre))
+                FROM (
+                    -- Permissions vía roles
+                    SELECT DISTINCT rp.permiso_id
+                    FROM usuario_roles ur2
+                    JOIN rol_permisos rp ON rp.rol_id = ur2.rol_id
+                    WHERE ur2.usuario_id = u.usuario_id
+                    UNION
+                    -- Permisos directos
+                    SELECT DISTINCT up.permiso_id
+                    FROM usuario_permisos up
+                    WHERE up.usuario_id = u.usuario_id
+                ) src
+                JOIN permisos p ON p.permiso_id = src.permiso_id
+                ),
+                JSON_ARRAY()
+            ) AS permissions
+        FROM usuarios u
+        LEFT JOIN empleados e on u.usuario_id = e.usuario_id
+        WHERE (u.username = ? OR u.email = ?) AND JSON_CONTAINS(
+          (SELECT JSON_ARRAYAGG(r.rol_id) FROM usuario_roles ur JOIN roles r ON r.rol_id = ur.rol_id WHERE ur.usuario_id = u.usuario_id),
+          JSON_QUOTE('3')  -- ID del rol "Cliente"
+        );
+      `;
+      const params = [usernameOrEmail, usernameOrEmail];
+      const result: CustomerWithRolesAndPermissionsSQLResult[] =
+        await this.databaseService.query<CustomerWithRolesAndPermissionsSQLResult>(
+          query,
+          params,
+        );
+      console.log('Result from DB:', result[0]?.is_active);
+      if (result.length === 0) {
+        return null;
+      }
+      const userResponse: CustomerWithRolesAndPermissionsResponse =
+        UserAdapter.fromCustomerWithRolesAndPermissionsSQLResultToCustomerWithRolesAndPermissionsResponse(
+          result[0],
+        );
       return userResponse;
     } catch (error) {
       throw error;

@@ -2,12 +2,14 @@ import { DatabaseAbstract } from '../../../../../../shared/connections/database/
 import { Injectable } from '@nestjs/common';
 import { InterfaceUserRepository } from '../../../../domain/contracts/user.interface.repository';
 import {
+  CustomerWithRolesAndPermissionsResponse,
   UserResponse,
   UserResponseWithPermissionsResponse,
   UserResponseWithRolesAndPermissionsResponse,
   UserResponseWithRolesResponse,
 } from '../../../../domain/schemas/dto/response/user.response';
 import {
+  CustomerWithRolesAndPermissionsSQLResult,
   UserSQLResult,
   UserWithPermissionsSQLResult,
   UserWithRolesAndPermissionsSQLResult,
@@ -49,10 +51,11 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [roleId];
 
-      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
-        query,
-        params,
-      );
+      const result =
+        await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
+          query,
+          params,
+        );
 
       if (result.length === 0) {
         throw new RpcException({
@@ -160,6 +163,116 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
     }
   }
 
+  async findCustomerByUsernameOrEmailWithRolesAndPermissions(
+    usernameOrEmail: string,
+  ): Promise<CustomerWithRolesAndPermissionsResponse | null> {
+    try {
+      const query: string = `
+        SELECT
+            cu.cliente_usuario_id   AS "user_id",
+            cu.cliente_id           AS "username",
+            cu.email                AS "email",
+            cu.fecha_registro       AS "registered_at",
+            cu.fecha_ultimo_acceso  AS "last_login",
+            cu.failed_attempts      AS "failed_attempts",
+            cu.two_factor_enabled,
+            cu.is_active            AS "is_active",
+            NULL::character varying AS "observations",
+            cu.password_hash        AS "password_hash",
+
+            CASE
+                WHEN e.ruc IS NOT NULL THEN
+                    jsonb_build_object(
+                        'company_id',      e.empresa_id,
+                        'commercial_name', e.nombre_comercial,
+                        'business_name',   e.razon_social,
+                        'ruc',             e.ruc,
+                        'address',         e.direccion,
+                        'parish_id',       e.parroquia_id,
+                        'country',         e.pais,
+                        'client_id',       e.cliente_id,
+                        'phones',          cc.phones,
+                        'emails',          cc.correos
+                    )
+                ELSE NULL
+            END AS "company",
+
+            CASE
+                WHEN e.ruc IS NULL AND ci.ciudadano_id IS NOT NULL THEN
+                    jsonb_build_object(
+                        'person_id',      ci.ciudadano_id,
+                        'first_name',     ci.nombres,
+                        'last_name',      ci.apellidos,
+                        'birth_date',     ci.fecha_nacimiento,
+                        'is_deceased',    ci.fallecido,
+                        'gender_id',      ci.sexo_id,
+                        'civil_status_id',ci.estado_civil_id,
+                        'profession_id',  ci.profesion_id,
+                        'parish_id',      ci.parroquia_id,
+                        'address',        ci.direccion,
+                        'country',        ci.pais_origen,
+                        'phones',         cc.phones,
+                        'emails',         cc.correos
+                    )
+                ELSE NULL
+            END AS "person",
+
+            COALESCE(
+                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre))
+                FROM public.cliente_usuario_roles cur
+                JOIN public.roles r ON r.rol_id = cur.rol_id
+                WHERE cur.cliente_usuario_id = cu.cliente_usuario_id),
+                '[]'::jsonb
+            )::json AS roles,
+
+            COALESCE(
+                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre))
+                FROM (
+                    SELECT DISTINCT rp.permiso_id
+                    FROM public.cliente_usuario_roles cur
+                    JOIN public.rol_permisos rp ON rp.rol_id = cur.rol_id
+                    WHERE cur.cliente_usuario_id = cu.cliente_usuario_id
+                    UNION
+                    SELECT DISTINCT cup.permiso_id
+                    FROM public.cliente_usuario_permisos cup
+                    WHERE cup.cliente_usuario_id = cu.cliente_usuario_id
+                ) src
+                JOIN public.permisos p ON p.permiso_id = src.permiso_id),
+                '[]'::jsonb
+            )::json AS permissions
+
+        FROM public.cliente_usuario cu
+        INNER JOIN cliente c   ON c.cliente_id = cu.cliente_id
+        LEFT  JOIN empresa  e  ON e.ruc        = c.cliente_id
+        -- cpn solo se une si NO hay empresa (evita ambigüedad para RUCs registrados como persona)
+        LEFT  JOIN public.cliente_persona_natural cpn ON cpn.cliente_id = cu.cliente_id AND e.ruc IS NULL
+        LEFT  JOIN public.ciudadano ci                ON ci.ciudadano_id = cpn.ciudadano_id
+        LEFT  JOIN cliente_contacto cc                ON cc.cliente_id   = c.cliente_id
+        WHERE cu.cliente_id = $1 OR cu.email = $1;
+        `;
+      const params = [usernameOrEmail];
+
+      const result =
+        await this.databaseService.query<CustomerWithRolesAndPermissionsSQLResult>(
+          query,
+          params,
+        );
+      console.log('SQL Result:', result); // Debug: Verificar resultado de la consulta
+      if (result.length === 0) {
+        return null;
+      }
+
+      const userResponse: CustomerWithRolesAndPermissionsResponse =
+        UserAdapter.fromCustomerWithRolesAndPermissionsSQLResultToCustomerWithRolesAndPermissionsResponse(
+          result[0],
+        );
+
+      return userResponse;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async findByIdWithRolesAndPermissions(
     userId: string,
   ): Promise<UserResponseWithRolesAndPermissionsResponse | null> {
@@ -249,10 +362,11 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [email];
 
-      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
-        query,
-        params,
-      );
+      const result =
+        await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
+          query,
+          params,
+        );
 
       if (result.length === 0) {
         throw new RpcException({
@@ -330,10 +444,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [username, email];
 
-      const result = await this.databaseService.query<any>(
-        query,
-        params,
-      );
+      const result = await this.databaseService.query<any>(query, params);
 
       if (result.length === 0) {
         throw new RpcException({
@@ -568,7 +679,10 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId];
 
-      await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(query, params);
+      await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
+        query,
+        params,
+      );
     } catch (error) {
       throw error;
     }
@@ -593,10 +707,11 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [userId];
 
-      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
-        query,
-        params,
-      );
+      const result =
+        await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
+          query,
+          params,
+        );
 
       if (result.length === 0) {
         throw new RpcException({
@@ -650,10 +765,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         userId,
       ];
 
-      const result = await this.databaseService.query<any>(
-        query,
-        params,
-      );
+      const result = await this.databaseService.query<any>(query, params);
 
       if (result.length === 0) {
         throw new RpcException({
@@ -864,7 +976,11 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         assignPermissionToUserRequest.permissionId,
       ];
 
-      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(query, params);
+      const result =
+        await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
+          query,
+          params,
+        );
 
       if (result.length === 0) {
         throw new RpcException({
@@ -893,7 +1009,11 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         removePermissionFromUserRequest.permissionId,
       ];
 
-      const result = await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(query, params);
+      const result =
+        await this.databaseService.query<UserWithRolesAndPermissionsSQLResult>(
+          query,
+          params,
+        );
 
       if (result.length === 0) {
         throw new RpcException({
@@ -956,10 +1076,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
       `;
       const params = [permissionId];
 
-      const result = await this.databaseService.query<any>(
-        query,
-        params,
-      );
+      const result = await this.databaseService.query<any>(query, params);
 
       if (result.length === 0) {
         throw new RpcException({
@@ -1074,7 +1191,10 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         removeRoleFromUserRequest.roleId,
       ];
 
-      const result = await this.databaseService.query<UserSQLResult>(query, params);
+      const result = await this.databaseService.query<UserSQLResult>(
+        query,
+        params,
+      );
 
       if (result.length === 0) {
         throw new RpcException({

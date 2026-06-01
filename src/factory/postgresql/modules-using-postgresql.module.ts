@@ -7,6 +7,7 @@ import { PostgresqlUserModule } from '../../modules/users/infrastructure/modules
 import { PostgresqlUserEmployeeModule } from '../../modules/employees/infrastructure/modules/postgresql/postgresql.use-employee.module';
 import { PostgresqlAuthModule } from '../../modules/authentication/infrastructure/modules/postgresql/postgresql.auth.module';
 import { PostgreSQLAuditModule } from '../../modules/audit/infrastructure/modules/postgresql/postgresql.audit.module';
+import { PostgreSQLCustomerModule } from '../../modules/customers/infrastructure/modules/postgresql/postgresql.customer.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PostgreSQLAuditModule } from '../../modules/audit/infrastructure/module
     PostgresqlUserEmployeeModule,
     PostgresqlAuthModule,
     PostgreSQLAuditModule,
+    PostgreSQLCustomerModule,
   ],
   controllers: [],
   providers: [],

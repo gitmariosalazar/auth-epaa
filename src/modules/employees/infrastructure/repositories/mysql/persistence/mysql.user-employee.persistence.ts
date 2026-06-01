@@ -112,9 +112,22 @@ export class MySQLUserEmployeePersistence
     return result.length > 0;
   }
 
-  async create(employee: UserEmployeeModel): Promise<UserEmployeeResponse> {
+  async create(
+    employee: UserEmployeeModel,
+    securityData?: { username?: string; email?: string; passwordHash?: string },
+  ): Promise<UserEmployeeResponse> {
     return await this.databaseService.transaction(
       async (client: IDatabaseClient) => {
+        let finalUserId = employee.userId;
+
+        if (securityData?.username && securityData?.email && securityData?.passwordHash) {
+          finalUserId = crypto.randomUUID();
+          await client.query(
+            `INSERT INTO usuarios (usuario_id, username, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())`,
+            [finalUserId, securityData.username, securityData.email, securityData.passwordHash],
+          );
+        }
+
         let finalCitizenId: string;
         if (employee.citizenId) {
           const { affectedRows: rowCount } = await client.execute(
@@ -139,7 +152,7 @@ export class MySQLUserEmployeePersistence
         const employeeId = crypto.randomUUID();
         await client.query(query, [
           employeeId,
-          employee.userId,
+          finalUserId,
           finalCitizenId,
           employee.idCard,
           employee.firstName,

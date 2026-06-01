@@ -40,7 +40,7 @@ export class CreateUserEmployeeRequest {
   // Auditoría (opcional, se llena en backend)
   createdBy?: string;
 
-  constructor(params: {
+  constructor(params?: {
     userId: string;
     username: string;
     email: string;
@@ -67,30 +67,32 @@ export class CreateUserEmployeeRequest {
     metadata?: Record<string, any>;
     createdBy?: string;
   }) {
-    this.userId = params.userId;
-    this.username = params.username;
-    this.email = params.email;
-    this.password = params.password;
-    this.firstName = params.firstName;
-    this.lastName = params.lastName;
-    this.dateOfBirth = params.dateOfBirth;
-    this.sexId = params.sexId;
-    this.idCard = params.idCard;
-    this.citizenId = params.citizenId;
-    this.positionId = params.positionId;
-    this.contractTypeId = params.contractTypeId;
-    this.employeeStatusId = params.employeeStatusId;
-    this.hireDate = params.hireDate;
-    this.terminationDate = params.terminationDate;
-    this.baseSalary = params.baseSalary;
-    this.supervisorId = params.supervisorId;
-    this.assignedZones = params.assignedZones;
-    this.driverLicense = params.driverLicense;
-    this.hasCompanyVehicle = params.hasCompanyVehicle;
-    this.internalPhone = params.internalPhone;
-    this.internalEmail = params.internalEmail;
-    this.photoUrl = params.photoUrl;
-    this.metadata = params.metadata;
-    this.createdBy = params.createdBy;
+    if (params) {
+      this.userId = params.userId;
+      this.username = params.username;
+      this.email = params.email;
+      this.password = params.password;
+      this.firstName = params.firstName;
+      this.lastName = params.lastName;
+      this.dateOfBirth = params.dateOfBirth;
+      this.sexId = params.sexId;
+      this.idCard = params.idCard;
+      this.citizenId = params.citizenId;
+      this.positionId = params.positionId;
+      this.contractTypeId = params.contractTypeId;
+      this.employeeStatusId = params.employeeStatusId;
+      this.hireDate = params.hireDate;
+      this.terminationDate = params.terminationDate;
+      this.baseSalary = params.baseSalary;
+      this.supervisorId = params.supervisorId;
+      this.assignedZones = params.assignedZones;
+      this.driverLicense = params.driverLicense;
+      this.hasCompanyVehicle = params.hasCompanyVehicle;
+      this.internalPhone = params.internalPhone;
+      this.internalEmail = params.internalEmail;
+      this.photoUrl = params.photoUrl;
+      this.metadata = params.metadata;
+      this.createdBy = params.createdBy;
+    }
   }
 }

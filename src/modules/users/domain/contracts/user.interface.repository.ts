@@ -7,6 +7,7 @@ import {
   RemoveRoleFromUserRequest,
 } from '../schemas/dto/request/assign-role-to-user.request';
 import {
+  CustomerWithRolesAndPermissionsResponse,
   UserResponse,
   UserResponseWithPermissionsResponse,
   UserResponseWithRolesAndPermissionsResponse,
@@ -28,10 +29,13 @@ export interface InterfaceUserRepository {
     usernameOrEmail: string,
   ): Promise<UserResponseWithRolesAndPermissionsResponse | null>;
 
+  findCustomerByUsernameOrEmailWithRolesAndPermissions(
+    usernameOrEmail: string,
+  ): Promise<CustomerWithRolesAndPermissionsResponse | null>;
+
   findByIdWithRolesAndPermissions(
     userId: string,
   ): Promise<UserResponseWithRolesAndPermissionsResponse | null>;
-
 
   findAllUsers(
     limit: number,

@@ -65,9 +65,13 @@ export interface InterfaceUserEmployeeRepository {
   /**
    * Crea un nuevo empleado vinculado a un usuario interno.
    * @param employee - Modelo completo del empleado
+   * @param securityData - Opcional. Datos de cuenta de usuario a crear en la misma transacción
    * @returns Empleado creado (con ID generado)
    */
-  create(employee: UserEmployeeModel): Promise<UserEmployeeResponse>;
+  create(
+    employee: UserEmployeeModel,
+    securityData?: { username?: string; email?: string; passwordHash?: string },
+  ): Promise<UserEmployeeResponse>;
 
   /**
    * Actualiza un empleado existente (parcial).

@@ -245,6 +245,15 @@ export class UserController {
     }
   }
 
+  @MessagePattern('authentication.user.get_customer_profile')
+  async getCustomerProfile(@Payload() usernameOrEmail: string) {
+    try {
+      return await this.findUserUseCase.getCustomerProfile(usernameOrEmail);
+    } catch (error) {
+      this.handleException(error);
+    }
+  }
+
   @MessagePattern('authentication.user.assign_role_to_user')
   async assignRoleToUser(@Payload() data: AssignRoleToUserRequest) {
     try {
