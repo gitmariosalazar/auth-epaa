@@ -256,8 +256,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         await this.databaseService.query<CustomerWithRolesAndPermissionsSQLResult>(
           query,
           params,
-        );
-      console.log('SQL Result:', result); // Debug: Verificar resultado de la consulta
+        ); // Debug: Verificar resultado de la consulta
       if (result.length === 0) {
         return null;
       }
