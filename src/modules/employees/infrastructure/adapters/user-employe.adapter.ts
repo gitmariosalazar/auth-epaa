@@ -19,7 +19,13 @@ export class UserEmployeeAdapter {
       employeeStatusId: sqlResult.employee_status_id,
       hireDate: sqlResult.hire_date,
       terminationDate: sqlResult.termination_date,
-      assignedZones: [...sqlResult.assigned_zones],
+      assignedZones: (() => {
+        const z = sqlResult.assigned_zones;
+        if (!z) return [];
+        if (Array.isArray(z)) return z;
+        // PostgreSQL jsonb puede volver como string '[1,2,3]'
+        try { return JSON.parse(z as unknown as string) ?? []; } catch { return []; }
+      })(),
       hasCompanyVehicle: Boolean(sqlResult.has_company_vehicle),
       internalPhone: sqlResult.internal_phone,
       internalEmail: sqlResult.internal_email,
