@@ -6,3 +6,13 @@ export interface RolResponse {
   isActive: boolean;
   creationDate: Date;
 }
+
+export interface PositionResponse {
+  positionId: number;
+  name: string;
+  levelJerarchy: number;
+  description?: string;
+  isActive: boolean;
+  creationDate: Date;
+  updatedAt: Date;
+}

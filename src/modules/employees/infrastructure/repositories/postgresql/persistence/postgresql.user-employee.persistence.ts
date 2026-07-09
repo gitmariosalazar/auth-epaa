@@ -129,20 +129,25 @@ export class PostgreSQLUserEmployeePersistence implements InterfaceUserEmployeeR
 
         let finalCitizenId: string;
         if (employee.citizenId) {
-          const { affectedRows: rowCount } = await client.execute(
+          const rows = await client.query<any>(
             'SELECT 1 FROM ciudadano WHERE ciudadano_id = $1',
             [employee.citizenId],
           );
-          if (rowCount === 0)
-            throw new RpcException({
-              statusCode: statusCode.BAD_REQUEST,
-              message: 'Citizen not found',
-            });
+          if (rows.length === 0) {
+            await client.query(
+              `INSERT INTO ciudadano (
+                ciudadano_id, nombres, apellidos, sexo_id, estado_civil_id, profesion_id, parroquia_id, direccion, created_at, updated_at
+              ) VALUES ($1, $2, $3, $4, 1, 59, '100252', 'SIN DIRECCION', NOW(), NOW())`,
+              [employee.citizenId, employee.firstName, employee.lastName, employee.sexId || 1],
+            );
+          }
           finalCitizenId = employee.citizenId;
         } else {
           const rows = await client.query<any>(
-            'INSERT INTO ciudadano (ciudadano_id, nombres, apellidos, created_at, updated_at) VALUES (uuid_generate_v4(), $1, $2, NOW(), NOW()) RETURNING ciudadano_id',
-            [employee.firstName, employee.lastName],
+            `INSERT INTO ciudadano (
+              ciudadano_id, nombres, apellidos, sexo_id, estado_civil_id, profesion_id, parroquia_id, direccion, created_at, updated_at
+            ) VALUES (uuid_generate_v4(), $1, $2, $3, 1, 59, '100252', 'SIN DIRECCION', NOW(), NOW()) RETURNING ciudadano_id`,
+            [employee.firstName, employee.lastName, employee.sexId || 1],
           );
           finalCitizenId = rows[0].ciudadano_id;
         }

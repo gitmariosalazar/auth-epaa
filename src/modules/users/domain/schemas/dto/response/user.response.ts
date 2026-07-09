@@ -1,4 +1,3 @@
-
 export interface UserResponse {
   userId: string;
   username: string;
@@ -29,6 +28,8 @@ export interface UserResponse {
   twoFactorEnabled?: boolean;
   isActive: boolean;
   observations?: string | null;
+  positionName?: string;
+  contractTypeName?: string;
 }
 
 export interface UserResponseWithRolesAndPermissionsResponse extends UserResponse {

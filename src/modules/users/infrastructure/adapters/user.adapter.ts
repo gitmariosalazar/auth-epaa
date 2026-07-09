@@ -45,6 +45,8 @@ export class UserAdapter {
       twoFactorEnabled: Boolean(user.two_factor_enabled),
       isActive: Boolean(user.is_active),
       observations: user.observations,
+      positionName: user.position_name,
+      contractTypeName: user.contract_type_name,
     };
   }
 
@@ -84,6 +86,8 @@ export class UserAdapter {
       passwordHash: user.password_hash,
       roles: user.roles,
       permissions: user.permissions,
+      positionName: user.position_name,
+      contractTypeName: user.contract_type_name,
     };
   }
 
@@ -121,6 +125,8 @@ export class UserAdapter {
       isActive: Boolean(user.is_active),
       observations: user.observations,
       permissions: user.permissions,
+      positionName: user.position_name,
+      contractTypeName: user.contract_type_name,
     };
   }
 
@@ -158,6 +164,8 @@ export class UserAdapter {
       isActive: Boolean(user.is_active),
       observations: user.observations,
       roles: user.roles,
+      positionName: user.position_name,
+      contractTypeName: user.contract_type_name,
     };
   }
 

@@ -122,7 +122,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
             COALESCE(
                 (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre))
                 FROM (
-                    -- Permissions vía roles
+                    -- Permissions v�a roles
                     SELECT DISTINCT rp.permiso_id
                     FROM usuario_roles ur2
                     JOIN rol_permisos rp ON rp.rol_id = ur2.rol_id
@@ -136,10 +136,13 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
                 JOIN permisos p ON p.permiso_id = src.permiso_id
                 ),
                 '[]'::jsonb
-            )::json AS permissions
-
+            )::json AS permissions,
+            c.nombre AS "position_name",
+            t.nombre AS "contract_type_name"
         FROM usuarios u
         LEFT JOIN empleados e on u.usuario_id = e.usuario_id
+        LEFT JOIN cargo c on e.cargo_id = c.cargo_id
+        LEFT JOIN tipo_contrato t on e.tipo_contrato_id = t.tipo_contrato_id
         WHERE u.username = $1 OR u.email = $1;
       `;
       const params = [usernameOrEmail];
@@ -316,10 +319,14 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
                 JOIN permisos p ON p.permiso_id = src.permiso_id
                 ),
                 '[]'::jsonb
-            )::json AS permissions
+            )::json AS permissions,
+            c.nombre AS "position_name",
+            t.nombre AS "contract_type_name"
 
         FROM usuarios u
         LEFT JOIN empleados e on u.usuario_id = e.usuario_id
+        LEFT JOIN cargo c on e.cargo_id = c.cargo_id
+        LEFT JOIN tipo_contrato t on e.tipo_contrato_id = t.tipo_contrato_id
         WHERE u.usuario_id = $1;
       `;
       const params = [userId];
@@ -928,9 +935,13 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
                 JOIN permisos p ON p.permiso_id = src.permiso_id
                 ),
                 '[]'::jsonb
-            )::json AS permissions
+            )::json AS permissions,
+            c.nombre AS "position_name",
+            t.nombre AS "contract_type_name"
         FROM usuarios u
         LEFT JOIN empleados e on u.usuario_id = e.usuario_id
+        LEFT JOIN cargo c on e.cargo_id = c.cargo_id
+        LEFT JOIN tipo_contrato t on e.tipo_contrato_id = t.tipo_contrato_id
         LIMIT $1 OFFSET $2;
       `;
       const params = [limit, offset];

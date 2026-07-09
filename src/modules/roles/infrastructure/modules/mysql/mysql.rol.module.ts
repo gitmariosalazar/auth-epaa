@@ -5,19 +5,33 @@ import { CreateRolUseCase } from '../../../application/usecases/create-rol.useca
 import { FindRolUseCase } from '../../../application/usecases/find-rol.usecase';
 import { UpdateRolUseCase } from '../../../application/usecases/update-rol.usecase';
 import { RolMySQLPersistence } from '../../repositories/mysql/persistence/mysql.rol.persistence';
+import { PositionController } from '../../controllers/position.controller';
+import { CreatePositionUseCase } from '../../../application/usecases/create-position.usecase';
+import { FindPositionUseCase } from '../../../application/usecases/find-position.usecase';
+import { UpdatePositionUseCase } from '../../../application/usecases/update-position.usecase';
+import { DisablePositionUseCase } from '../../../application/usecases/disable-position.usecase';
+import { MySQLPositionPersistence } from '../../repositories/mysql/persistence/mysql.position.persistence';
 
 @Module({
   imports: [KafkaServiceModule],
-  controllers: [RolController],
+  controllers: [RolController, PositionController],
   providers: [
-    
     CreateRolUseCase,
     FindRolUseCase,
     UpdateRolUseCase,
     {
       provide: 'RolRepository',
       useClass: RolMySQLPersistence,
-    }],
+    },
+    CreatePositionUseCase,
+    FindPositionUseCase,
+    UpdatePositionUseCase,
+    DisablePositionUseCase,
+    {
+      provide: 'PositionRepository',
+      useClass: MySQLPositionPersistence,
+    },
+  ],
   exports: [],
 })
 export class MySQLRolModule {}

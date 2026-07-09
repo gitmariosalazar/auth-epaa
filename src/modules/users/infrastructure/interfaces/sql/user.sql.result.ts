@@ -28,6 +28,8 @@ export interface UserSQLResult {
   two_factor_enabled?: boolean | null | number;
   is_active: boolean | null | number;
   observations?: string | null;
+  position_name?: string;
+  contract_type_name?: string;
 }
 
 export interface UserWithRolesAndPermissionsSQLResult extends UserSQLResult {

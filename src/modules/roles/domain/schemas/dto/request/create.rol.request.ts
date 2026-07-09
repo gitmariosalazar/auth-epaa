@@ -1,5 +1,5 @@
 export class CreateRolRequest {
-  name: string;
+  name!: string;
   description?: string;
   parentRolId?: number;
 }
