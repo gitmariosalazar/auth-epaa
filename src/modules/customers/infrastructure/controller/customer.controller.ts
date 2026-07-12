@@ -11,6 +11,7 @@ import { SendVerificationCodeUseCase } from '../../application/usecases/send-ver
 import { VerifyAccountByCodeUseCase } from '../../application/usecases/verify-account-by-code.usecase';
 import { CustomerDomainException } from '../../domain/exceptions/customer.exceptions';
 import { statusCode } from '../../../../settings/environments/status-code';
+import { UserProfileResponse } from '../../domain/schemas/dto/response/user-profile.response';
 
 @Controller('customer')
 export class CustomerController {
@@ -39,7 +40,9 @@ export class CustomerController {
   }
 
   @MessagePattern('authentication.customer.find_by_id')
-  async findById(@Payload() customerUserId: string): Promise<CustomerResponse | null> {
+  async findById(
+    @Payload() customerUserId: string,
+  ): Promise<CustomerResponse | null> {
     try {
       return await this.findCustomerUseCase.findById(customerUserId);
     } catch (error) {
@@ -48,7 +51,9 @@ export class CustomerController {
   }
 
   @MessagePattern('authentication.customer.find_by_client_id')
-  async findByClientId(@Payload() clientId: string): Promise<CustomerResponse | null> {
+  async findByClientId(
+    @Payload() clientId: string,
+  ): Promise<CustomerResponse | null> {
     try {
       return await this.findCustomerUseCase.findByClientId(clientId);
     } catch (error) {
@@ -57,7 +62,9 @@ export class CustomerController {
   }
 
   @MessagePattern('authentication.customer.find_by_email')
-  async findByEmail(@Payload() email: string): Promise<CustomerResponse | null> {
+  async findByEmail(
+    @Payload() email: string,
+  ): Promise<CustomerResponse | null> {
     try {
       return await this.findCustomerUseCase.findByEmail(email);
     } catch (error) {
@@ -66,7 +73,9 @@ export class CustomerController {
   }
 
   @MessagePattern('authentication.customer.create')
-  async create(@Payload() request: CreateCustomerRequest): Promise<CustomerResponse> {
+  async create(
+    @Payload() request: CreateCustomerRequest,
+  ): Promise<CustomerResponse> {
     try {
       return await this.createCustomerUseCase.execute(request);
     } catch (error) {
@@ -76,10 +85,17 @@ export class CustomerController {
 
   @MessagePattern('authentication.customer.update')
   async update(
-    @Payload() payload: { customerUserId: string; updates: UpdateCustomerRequest },
+    @Payload()
+    payload: {
+      customerUserId: string;
+      updates: UpdateCustomerRequest;
+    },
   ): Promise<CustomerResponse | null> {
     try {
-      return await this.updateCustomerUseCase.execute(payload.customerUserId, payload.updates);
+      return await this.updateCustomerUseCase.execute(
+        payload.customerUserId,
+        payload.updates,
+      );
     } catch (error) {
       this.handleException(error);
     }
@@ -95,7 +111,9 @@ export class CustomerController {
   }
 
   @MessagePattern('authentication.customer.restore')
-  async restore(@Payload() customerUserId: string): Promise<CustomerResponse | null> {
+  async restore(
+    @Payload() customerUserId: string,
+  ): Promise<CustomerResponse | null> {
     try {
       return await this.deleteCustomerUseCase.restore(customerUserId);
     } catch (error) {
@@ -108,7 +126,10 @@ export class CustomerController {
     @Payload() payload: { limit: number; offset: number },
   ): Promise<CustomerResponse[]> {
     try {
-      return await this.findCustomerUseCase.findAll(payload.limit, payload.offset);
+      return await this.findCustomerUseCase.findAll(
+        payload.limit,
+        payload.offset,
+      );
     } catch (error) {
       this.handleException(error);
     }
@@ -122,7 +143,12 @@ export class CustomerController {
    */
   @MessagePattern('authentication.customer.send_verification_code')
   async sendVerificationCode(
-    @Payload() payload: { clienteUsuarioId: string; tipoCodigo: 'EMAIL_CODE' | 'PHONE_CODE'; ipSolicitud?: string },
+    @Payload()
+    payload: {
+      clienteUsuarioId: string;
+      tipoCodigo: 'EMAIL_CODE' | 'PHONE_CODE';
+      ipSolicitud?: string;
+    },
   ): Promise<void> {
     try {
       await this.sendVerificationCodeUseCase.execute(
@@ -141,7 +167,12 @@ export class CustomerController {
    */
   @MessagePattern('authentication.customer.verify_code')
   async verifyCode(
-    @Payload() payload: { clienteUsuarioId: string; codigo: string; tipoCodigo: string },
+    @Payload()
+    payload: {
+      clienteUsuarioId: string;
+      codigo: string;
+      tipoCodigo: string;
+    },
   ): Promise<{ verified: boolean; message: string }> {
     try {
       return await this.verifyAccountByCodeUseCase.execute(
@@ -160,13 +191,31 @@ export class CustomerController {
    */
   @MessagePattern('authentication.customer.resend_verification_code')
   async resendVerificationCode(
-    @Payload() payload: { clienteUsuarioId: string; tipoCodigo: 'EMAIL_CODE' | 'PHONE_CODE'; ipSolicitud?: string },
+    @Payload()
+    payload: {
+      clienteUsuarioId: string;
+      tipoCodigo: 'EMAIL_CODE' | 'PHONE_CODE';
+      ipSolicitud?: string;
+    },
   ): Promise<void> {
     try {
       await this.sendVerificationCodeUseCase.execute(
         payload.clienteUsuarioId,
         payload.tipoCodigo,
         payload.ipSolicitud,
+      );
+    } catch (error) {
+      this.handleException(error);
+    }
+  }
+
+  @MessagePattern('authentication.customer.get_profile_by_search_value')
+  async getProfileByCustomerUserSearchValue(
+    @Payload() searchValue: string,
+  ): Promise<UserProfileResponse | null> {
+    try {
+      return await this.findCustomerUseCase.getProfileByCustomerUserSearchValue(
+        searchValue,
       );
     } catch (error) {
       this.handleException(error);

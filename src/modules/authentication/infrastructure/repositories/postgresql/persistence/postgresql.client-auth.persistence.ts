@@ -66,15 +66,23 @@ export class PostgreSQLClientAuthPersistence implements InterfaceClientAuthRepos
     usernameOrEmail: string,
   ): Promise<ClientUserModel | null> {
     const query = `
-      SELECT 
-        cu.cliente_usuario_id, 
-        cu.cliente_id, 
-        cu.email, 
-        cu.password_hash, 
-        cu.estado_cliente_usuario_id, 
-        cu.is_active, 
-        cu.is_locked_out, 
+      SELECT
+        cu.cliente_usuario_id,
+        cu.cliente_id,
+        cu.email,
+        cu.password_hash,
+        cu.estado_cliente_usuario_id,
+        cu.is_active,
+        cu.is_locked_out,
         cu.lockout_until,
+        -- Roles
+        COALESCE(
+            (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre))
+            FROM cliente_usuario_roles ur2
+            JOIN roles r ON r.rol_id = ur2.rol_id
+            WHERE ur2.cliente_usuario_id = cu.cliente_usuario_id),
+            '[]'::jsonb
+        )::json AS roles,
         ci.nombres          AS nombres,
         ci.apellidos        AS apellidos,
         emp.razon_social    AS razon_social,
@@ -115,6 +123,8 @@ export class PostgreSQLClientAuthPersistence implements InterfaceClientAuthRepos
       clientUser.firstName = usernameOrEmail.split('@')[0];
       clientUser.lastName = 'Cliente';
     }
+
+    clientUser.roles = Array.isArray(row.roles) ? row.roles : [];
 
     return clientUser;
   }

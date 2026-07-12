@@ -2,6 +2,7 @@ import { UserResponseWithRolesAndPermissionsResponse } from '../../../users/doma
 import { CreateRefreshTokenRequest } from '../../domain/schemas/dto/request/create.refresh-token.request';
 import { AuthResponse } from '../../domain/schemas/dto/response/auth.response';
 import { RefreshTokenModel } from '../../domain/schemas/models/refresh-token.model';
+import { ClientUserModel } from '../../domain/schemas/models/client-user.model';
 
 export class AuthMapper {
   /**
@@ -113,6 +114,31 @@ export class AuthMapper {
         lastName:
           user.username === 'root' ? 'User' : user.lastName || 'Sin Apellido',
         isActive: user.isActive,
+      },
+    };
+  }
+
+  /**
+   * Maps a ClientUserModel (customer) plus generated tokens into an AuthResponse.
+   * Keeps response construction out of the use case (SRP).
+   */
+  static fromClientUserModelToAuthResponse(
+    client: ClientUserModel,
+    accessToken: string,
+    refreshToken: string,
+  ): AuthResponse {
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        userId: client.clientUserId,
+        username: client.email,
+        email: client.email,
+        roles: client.roles as any,
+        permissions: [],
+        firstName: client.firstName || 'Sin Nombre',
+        lastName: client.lastName || 'Sin Apellido',
+        isActive: client.isActive,
       },
     };
   }

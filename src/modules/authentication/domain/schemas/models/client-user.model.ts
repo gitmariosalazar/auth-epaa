@@ -9,4 +9,5 @@ export class ClientUserModel {
   lockoutUntil?: Date;
   firstName?: string;
   lastName?: string;
+  roles: { id: number; name: string }[] = [];
 }

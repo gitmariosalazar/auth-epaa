@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InterfaceCustomerRepository } from '../../domain/contracts/customer.interface.repository';
 import { CustomerResponse } from '../../domain/schemas/dto/response/customer.response';
 import { CustomerNotFoundException } from '../../domain/exceptions/customer.exceptions';
+import { UserProfileResponse } from '../../domain/schemas/dto/response/user-profile.response';
 
 @Injectable()
 export class FindCustomerUseCase {
@@ -36,5 +37,13 @@ export class FindCustomerUseCase {
 
   async findAll(limit = 10, offset = 0): Promise<CustomerResponse[]> {
     return await this.customerRepository.findAllCustomers(limit, offset);
+  }
+
+  async getProfileByCustomerUserSearchValue(
+    searchValue: string,
+  ): Promise<UserProfileResponse | null> {
+    return await this.customerRepository.getProfileByCustomerUserSearchValue(
+      searchValue,
+    );
   }
 }

@@ -1,4 +1,5 @@
 import { CustomerResponse } from '../schemas/dto/response/customer.response';
+import { UserProfileResponse } from '../schemas/dto/response/user-profile.response';
 import { CustomerModel } from '../schemas/models/customer.model';
 
 export interface InterfaceCustomerRepository {
@@ -18,4 +19,7 @@ export interface InterfaceCustomerRepository {
   softDelete(customerUserId: string): Promise<void>;
   restore(customerUserId: string): Promise<CustomerResponse | null>;
   findAllCustomers(limit: number, offset: number): Promise<CustomerResponse[]>;
+  getProfileByCustomerUserSearchValue(
+    searchValue: string,
+  ): Promise<UserProfileResponse | null>;
 }

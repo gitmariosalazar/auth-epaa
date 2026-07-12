@@ -135,19 +135,10 @@ export class ClientLoginUseCase {
       ctx?.userAgent || 'N/A',
     );
 
-    return {
+    return AuthMapper.fromClientUserModelToAuthResponse(
+      client,
       accessToken,
       refreshToken,
-      user: {
-        userId: client.clientUserId,
-        username: client.email,
-        email: client.email,
-        roles: [],
-        permissions: [],
-        firstName: client.firstName || 'Sin Nombre',
-        lastName: client.lastName || 'Sin Apellido',
-        isActive: client.isActive,
-      },
-    } as any;
+    );
   }
 }

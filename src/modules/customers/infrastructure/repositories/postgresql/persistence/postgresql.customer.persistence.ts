@@ -8,8 +8,12 @@ import {
 import { InterfaceCustomerRepository } from '../../../../domain/contracts/customer.interface.repository';
 import { CustomerResponse } from '../../../../domain/schemas/dto/response/customer.response';
 import { CustomerModel } from '../../../../domain/schemas/models/customer.model';
-import { CustomerSQLResult } from '../../../interface/sql/customer.sql.result';
+import {
+  CustomerSQLResult,
+  UserProfileSQLResult,
+} from '../../../interface/sql/customer.sql.result';
 import { CustomerAdapter } from '../../../adapters/customer.adapter';
+import { UserProfileResponse } from '../../../../domain/schemas/dto/response/user-profile.response';
 
 @Injectable()
 export class PostgreSQLCustomerPersistence implements InterfaceCustomerRepository {
@@ -37,31 +41,47 @@ export class PostgreSQLCustomerPersistence implements InterfaceCustomerRepositor
 
   async findById(customerUserId: string): Promise<CustomerResponse | null> {
     const query = `SELECT ${this.SELECT_ALL_FIELDS} FROM public.cliente_usuario WHERE cliente_usuario_id = $1 AND deleted_at IS NULL;`;
-    const result = await this.databaseService.query<CustomerSQLResult>(query, [customerUserId]);
-    return result.length > 0 ? CustomerAdapter.fromSQLResultToResponse(result[0]) : null;
+    const result = await this.databaseService.query<CustomerSQLResult>(query, [
+      customerUserId,
+    ]);
+    return result.length > 0
+      ? CustomerAdapter.fromSQLResultToResponse(result[0])
+      : null;
   }
 
   async findByClientId(clientId: string): Promise<CustomerResponse | null> {
     const query = `SELECT ${this.SELECT_ALL_FIELDS} FROM public.cliente_usuario WHERE cliente_id = $1 AND deleted_at IS NULL;`;
-    const result = await this.databaseService.query<CustomerSQLResult>(query, [clientId]);
-    return result.length > 0 ? CustomerAdapter.fromSQLResultToResponse(result[0]) : null;
+    const result = await this.databaseService.query<CustomerSQLResult>(query, [
+      clientId,
+    ]);
+    return result.length > 0
+      ? CustomerAdapter.fromSQLResultToResponse(result[0])
+      : null;
   }
 
   async findByEmail(email: string): Promise<CustomerResponse | null> {
     const query = `SELECT ${this.SELECT_ALL_FIELDS} FROM public.cliente_usuario WHERE email = $1 AND deleted_at IS NULL;`;
-    const result = await this.databaseService.query<CustomerSQLResult>(query, [email.trim().toLowerCase()]);
-    return result.length > 0 ? CustomerAdapter.fromSQLResultToResponse(result[0]) : null;
+    const result = await this.databaseService.query<CustomerSQLResult>(query, [
+      email.trim().toLowerCase(),
+    ]);
+    return result.length > 0
+      ? CustomerAdapter.fromSQLResultToResponse(result[0])
+      : null;
   }
 
   async existsByClientId(clientId: string): Promise<boolean> {
-    const query = 'SELECT 1 FROM public.cliente_usuario WHERE cliente_id = $1 AND deleted_at IS NULL LIMIT 1;';
+    const query =
+      'SELECT 1 FROM public.cliente_usuario WHERE cliente_id = $1 AND deleted_at IS NULL LIMIT 1;';
     const result = await this.databaseService.query<any>(query, [clientId]);
     return result.length > 0;
   }
 
   async existsByEmail(email: string): Promise<boolean> {
-    const query = 'SELECT 1 FROM public.cliente_usuario WHERE email = $1 AND deleted_at IS NULL LIMIT 1;';
-    const result = await this.databaseService.query<any>(query, [email.trim().toLowerCase()]);
+    const query =
+      'SELECT 1 FROM public.cliente_usuario WHERE email = $1 AND deleted_at IS NULL LIMIT 1;';
+    const result = await this.databaseService.query<any>(query, [
+      email.trim().toLowerCase(),
+    ]);
     return result.length > 0;
   }
 
@@ -170,7 +190,10 @@ export class PostgreSQLCustomerPersistence implements InterfaceCustomerRepositor
           customer.updatedBy ? customer.updatedBy : null,
         ];
 
-        const insertedRows = await client.query<CustomerSQLResult>(insertQuery, params);
+        const insertedRows = await client.query<CustomerSQLResult>(
+          insertQuery,
+          params,
+        );
         return CustomerAdapter.fromSQLResultToResponse(insertedRows[0]);
       },
     );
@@ -201,7 +224,9 @@ export class PostgreSQLCustomerPersistence implements InterfaceCustomerRepositor
       customerUserId,
     ]);
 
-    return result.length > 0 ? CustomerAdapter.fromSQLResultToResponse(result[0]) : null;
+    return result.length > 0
+      ? CustomerAdapter.fromSQLResultToResponse(result[0])
+      : null;
   }
 
   async softDelete(customerUserId: string): Promise<void> {
@@ -216,16 +241,98 @@ export class PostgreSQLCustomerPersistence implements InterfaceCustomerRepositor
       UPDATE public.cliente_usuario SET deleted_at = NULL WHERE cliente_usuario_id = $1 
       RETURNING ${this.SELECT_ALL_FIELDS}
     `;
-    const result = await this.databaseService.query<CustomerSQLResult>(query, [customerUserId]);
-    return result.length > 0 ? CustomerAdapter.fromSQLResultToResponse(result[0]) : null;
+    const result = await this.databaseService.query<CustomerSQLResult>(query, [
+      customerUserId,
+    ]);
+    return result.length > 0
+      ? CustomerAdapter.fromSQLResultToResponse(result[0])
+      : null;
   }
 
-  async findAllCustomers(limit: number, offset: number): Promise<CustomerResponse[]> {
+  async findAllCustomers(
+    limit: number,
+    offset: number,
+  ): Promise<CustomerResponse[]> {
     const query = `
       SELECT ${this.SELECT_ALL_FIELDS} FROM public.cliente_usuario 
       WHERE deleted_at IS NULL LIMIT $1 OFFSET $2;
     `;
-    const result = await this.databaseService.query<CustomerSQLResult>(query, [limit, offset]);
+    const result = await this.databaseService.query<CustomerSQLResult>(query, [
+      limit,
+      offset,
+    ]);
     return result.map((row) => CustomerAdapter.fromSQLResultToResponse(row));
+  }
+
+  async getProfileByCustomerUserSearchValue(
+    searchValue: string,
+  ): Promise<UserProfileResponse | null> {
+    const query = /*sql*/ `
+      SELECT
+          -- User Data
+          cu.cliente_usuario_id AS "user_id",
+          cu.cliente_id AS "client_id",
+          cu.email AS "email",
+          cu.fecha_registro AS "register_date",
+
+          CASE
+              WHEN e.ruc IS NOT NULL THEN
+                  jsonb_build_object(
+                      'company_id', e.empresa_id,
+                      'commercial_name', e.nombre_comercial,
+                      'business_name', e.razon_social,
+                      'ruc', e.ruc,
+                      'address', e.direccion,
+                      'parish_id', e.parroquia_id,
+                      'country', e.pais,
+                      'client_id', e.cliente_id,
+                      'phones', cc.phones,
+                      'emails', cc.correos
+                  )
+              ELSE NULL
+          END AS "company",
+
+          -- Person Data (if applicable)
+          CASE
+              WHEN ci.ciudadano_id IS NOT NULL THEN
+                  jsonb_build_object(
+                      'person_id', ci.ciudadano_id,
+                      'first_name', ci.nombres,
+                      'last_name', ci.apellidos,
+                      'birth_date', ci.fecha_nacimiento,
+                      'is_deceased', ci.fallecido,
+                      'gender_id', ci.sexo_id,
+                      'civil_status_id', ci.estado_civil_id,
+                      'profession_id', ci.profesion_id,
+                      'parish_id', ci.parroquia_id,
+                      'address', ci.direccion,
+                      'country', ci.pais_origen,
+                      'phones', cc.phones,
+                      'emails', cc.correos
+                  )
+              ELSE NULL
+          END AS "person",
+
+          -- �Aqu� estaban los errores corregidos!
+          CASE
+              WHEN ci.ciudadano_id IS NOT NULL THEN 'PERSONA NATURAL'
+              WHEN e.ruc IS NOT NULL THEN 'PERSONA JURIDICA'
+              ELSE NULL
+          END AS "user_type"
+
+      FROM cliente_usuario cu
+      LEFT JOIN cliente c ON cu.cliente_id = c.cliente_id
+      LEFT JOIN ciudadano ci     ON ci.ciudadano_id = c.cliente_id
+      LEFT JOIN empresa e        ON e.ruc = c.cliente_id
+      LEFT JOIN cliente_contacto cc ON cc.cliente_id = c.cliente_id
+      WHERE cu.email = $1 OR cu.cliente_id = $1 OR cu.cliente_usuario_id::text = $1;
+    `;
+    const result = await this.databaseService.query<UserProfileSQLResult>(
+      query,
+      [searchValue],
+    );
+    return result.length > 0
+      ? CustomerAdapter.fromUserProfileSQLResultToResponse(result[0])
+      : null;
   }
 }

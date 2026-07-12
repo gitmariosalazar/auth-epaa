@@ -126,20 +126,11 @@ export class RefreshTokenUseCase {
 
     // 3. Return both new tokens with proper structures
     if (isClient && clientUser) {
-      return {
+      return AuthMapper.fromClientUserModelToAuthResponse(
+        clientUser,
         accessToken,
-        refreshToken: newRefreshToken,
-        user: {
-          userId: clientUser.clientUserId,
-          username: clientUser.email,
-          email: clientUser.email,
-          roles: [],
-          permissions: [],
-          firstName: clientUser.firstName || 'Sin Nombre',
-          lastName: clientUser.lastName || 'Sin Apellido',
-          isActive: clientUser.isActive,
-        }
-      } as any;
+        newRefreshToken,
+      );
     }
 
     return AuthMapper.fromUserWithRolesAndPermissionsToUserResponse(
