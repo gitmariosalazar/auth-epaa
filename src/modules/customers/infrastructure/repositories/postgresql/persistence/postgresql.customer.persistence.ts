@@ -77,11 +77,13 @@ export class PostgreSQLCustomerPersistence implements InterfaceCustomerRepositor
   }
 
   async existsByEmail(email: string): Promise<boolean> {
+    console.log('Checking if email exists:', email); // Debugging line
     const query =
       'SELECT 1 FROM public.cliente_usuario WHERE email = $1 AND deleted_at IS NULL LIMIT 1;';
     const result = await this.databaseService.query<any>(query, [
       email.trim().toLowerCase(),
     ]);
+    console.log('Result of email existence check:', result); // Debugging line
     return result.length > 0;
   }
 

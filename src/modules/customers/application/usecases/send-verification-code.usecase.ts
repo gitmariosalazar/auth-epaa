@@ -89,8 +89,8 @@ export class SendVerificationCodeUseCase {
       priority: 'HIGH',
       metadata: {
         // ── Datos de envío ───────────────────────────────────────────
-        to:       customer.email,
-        codigo:   codigoNumerico,
+        to: customer.email,
+        codigo: codigoNumerico,
         expiracion: fechaExpiracion.toISOString(),
         // ── Template HTML profesional ────────────────────────────────
         // El EmailChannelSender del MS-Notificaciones lee templateId y
@@ -98,10 +98,10 @@ export class SendVerificationCodeUseCase {
         // de enviar el body en texto plano.
         templateId: 'verification-code',
         templateVars: {
-          nombre:             customer.email,
-          codigo:             codigoNumerico,
-          expiracionMinutos:  EXPIRATION_MINUTES,
-          portalUrl:          process.env.PORTAL_URL ?? 'https://portal.epaa.gob.ec',
+          nombre: customer.email,
+          codigo: codigoNumerico,
+          expiracionMinutos: EXPIRATION_MINUTES,
+          portalUrl: process.env.PORTAL_URL ?? 'https://epaa.gob.ec/wp/',
         },
       },
     };
@@ -110,7 +110,6 @@ export class SendVerificationCodeUseCase {
       pattern: 'notifications.send',
       data: notificationPayload,
     });
-
 
     this.logger.log(
       `[SendVerificationCode] Notificación emitida a notifications.send para: ${customer.email}`,
