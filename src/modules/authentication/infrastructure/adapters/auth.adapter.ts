@@ -19,6 +19,8 @@ export class AuthAdapter {
         lastName: sqlResult.last_name,
         isActive: Boolean(sqlResult.is_active),
         permissions: [], // Defaulting to empty array to fix build error
+        cardId: sqlResult.card_id,
+        isNaturalPerson: Boolean(sqlResult.is_natural_person),
       },
     };
   }

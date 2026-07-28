@@ -10,5 +10,7 @@ export interface AuthResponse {
     firstName: string;
     lastName: string;
     isActive: boolean;
+    cardId?: string;
+    isNaturalPerson?: boolean;
   };
 }

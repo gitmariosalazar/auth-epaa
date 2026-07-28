@@ -114,6 +114,8 @@ export class AuthMapper {
         lastName:
           user.username === 'root' ? 'User' : user.lastName || 'Sin Apellido',
         isActive: user.isActive,
+        cardId: user.cardId,
+        isNaturalPerson: user.isNaturalPerson || false,
       },
     };
   }
@@ -139,6 +141,8 @@ export class AuthMapper {
         firstName: client.firstName || 'Sin Nombre',
         lastName: client.lastName || 'Sin Apellido',
         isActive: client.isActive,
+        cardId: client.clienteId,
+        isNaturalPerson: client.isNaturalPerson || false,
       },
     };
   }

@@ -30,6 +30,7 @@ export interface UserResponse {
   observations?: string | null;
   positionName?: string;
   contractTypeName?: string;
+  isNaturalPerson?: boolean;
 }
 
 export interface UserResponseWithRolesAndPermissionsResponse extends UserResponse {

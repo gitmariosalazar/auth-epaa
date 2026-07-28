@@ -86,7 +86,11 @@ export class PostgreSQLClientAuthPersistence implements InterfaceClientAuthRepos
         ci.nombres          AS nombres,
         ci.apellidos        AS apellidos,
         emp.razon_social    AS razon_social,
-        emp.nombre_comercial AS nombre_comercial
+        emp.nombre_comercial AS nombre_comercial,
+        CASE
+            WHEN ci.ciudadano_id ISNULL THEN true
+            ELSE false
+        END AS is_natural_peron
       FROM public.cliente_usuario cu
       LEFT JOIN public.empresa emp ON emp.cliente_id = cu.cliente_id
       LEFT JOIN public.cliente_persona_natural cpn ON cpn.cliente_id = cu.cliente_id AND emp.cliente_id IS NULL
@@ -110,6 +114,7 @@ export class PostgreSQLClientAuthPersistence implements InterfaceClientAuthRepos
     clientUser.lockoutUntil = row.lockout_until
       ? new Date(row.lockout_until)
       : undefined;
+    clientUser.isNaturalPerson = Boolean(row.is_natural_peron);
 
     // Determinar nombre y apellido según si es persona natural o empresa
     if (row.nombres) {

@@ -10,4 +10,5 @@ export class ClientUserModel {
   firstName?: string;
   lastName?: string;
   roles: { id: number; name: string }[] = [];
+  isNaturalPerson?: boolean;
 }
