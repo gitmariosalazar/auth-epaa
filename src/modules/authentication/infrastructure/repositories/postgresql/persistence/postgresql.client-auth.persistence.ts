@@ -88,7 +88,7 @@ export class PostgreSQLClientAuthPersistence implements InterfaceClientAuthRepos
         emp.razon_social    AS razon_social,
         emp.nombre_comercial AS nombre_comercial,
         CASE
-            WHEN ci.ciudadano_id ISNULL THEN true
+            WHEN ci.ciudadano_id IS NOT NULL THEN true
             ELSE false
         END AS is_natural_peron
       FROM public.cliente_usuario cu
