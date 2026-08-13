@@ -1,3 +1,5 @@
+import { RolOrPermission } from '../../../../../../shared/interfaces/RolOrPermission';
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -5,8 +7,8 @@ export interface AuthResponse {
     userId: string;
     username: string;
     email: string;
-    roles: string[];
-    permissions: string[];
+    roles: RolOrPermission[];
+    permissions: RolOrPermission[];
     firstName: string;
     lastName: string;
     isActive: boolean;

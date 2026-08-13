@@ -111,7 +111,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
 
             -- Roles (using JSON_ARRAYAGG + subquery)
             COALESCE(
-                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre))
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
                 FROM usuario_roles ur2
                 JOIN roles r ON r.rol_id = ur2.rol_id
                 WHERE ur2.usuario_id = u.usuario_id),
@@ -120,7 +120,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
 
             -- Permissions: union + deduplicate before aggregation
             COALESCE(
-                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre))
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
                 FROM (
                     -- Permissions vía roles
                     SELECT DISTINCT rp.permiso_id
@@ -184,7 +184,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
             u.password_hash     AS "password_hash",
             -- Roles (using JSON_ARRAYAGG + subquery)
             COALESCE(
-                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre))
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
                 FROM usuario_roles ur2
                 JOIN roles r ON r.rol_id = ur2.rol_id
                 WHERE ur2.usuario_id = u.usuario_id),
@@ -193,7 +193,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
             -- Permissions: union + deduplicate before aggregation
             COALESCE(
 
-                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre))
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
                 FROM (
                     -- Permissions vía roles
                     SELECT DISTINCT rp.permiso_id
@@ -258,7 +258,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
 
             -- Roles
             COALESCE(
-                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre))
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
                 FROM usuario_roles ur2
                 JOIN roles r ON r.rol_id = ur2.rol_id
                 WHERE ur2.usuario_id = u.usuario_id),
@@ -267,7 +267,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
 
             -- Permissions
             COALESCE(
-                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre))
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
                 FROM (
                     SELECT DISTINCT rp.permiso_id
                     FROM usuario_roles ur2
@@ -833,14 +833,14 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
             u.observaciones     AS "observations",
             u.password_hash,
             COALESCE(
-                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre))
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
                 FROM usuario_roles ur2
                 JOIN roles r ON r.rol_id = ur2.rol_id
                 WHERE ur2.usuario_id = u.usuario_id),
                 JSON_ARRAY()
             ) AS roles,
             COALESCE(
-                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre))
+                (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
                 FROM (
                     -- Permissions vía roles
                     SELECT DISTINCT rp.permiso_id
@@ -1038,7 +1038,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
           u.activo AS "is_active",
           u.observaciones AS "observations",
           COALESCE(
-            (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre))
+            (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
              FROM usuario_permisos up
              JOIN permisos p ON up.permiso_id = p.permiso_id
              WHERE up.usuario_id = u.usuario_id
@@ -1178,7 +1178,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
           u.activo AS "is_active",
           u.observaciones AS "observations",
           COALESCE(
-            (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre))
+            (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
              FROM usuario_roles ur
              JOIN roles r ON ur.rol_id = r.rol_id
              WHERE ur.usuario_id = u.usuario_id
@@ -1235,7 +1235,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
             ), JSON_ARRAY()
           ) AS roles,
           COALESCE(
-            (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre))
+            (SELECT JSON_ARRAYAGG(JSON_OBJECT('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
              FROM usuario_permisos up
              JOIN permisos p ON up.permiso_id = p.permiso_id
              WHERE up.usuario_id = u.usuario_id

@@ -6,6 +6,9 @@ import { FindCustomerUseCase } from '../../../application/usecases/find-customer
 import { UpdateCustomerUseCase } from '../../../application/usecases/update-customer.usecase';
 import { DeleteCustomerUseCase } from '../../../application/usecases/delete-customer.usecase';
 import { CustomerController } from '../../controller/customer.controller';
+import { MySQLVerificationPersistence } from '../../repositories/mysql/persistence/mysql.verification.persistence';
+import { VerifyAccountByCodeUseCase } from '../../../application/usecases/verify-account-by-code.usecase';
+import { SendVerificationCodeUseCase } from '../../../application/usecases/send-verification-code.usecase';
 
 @Module({
   imports: [KafkaServiceModule],
@@ -16,16 +19,24 @@ import { CustomerController } from '../../controller/customer.controller';
       provide: 'CustomerRepository',
       useClass: MySQLCustomerPersistence,
     },
+    {
+      provide: 'VerificationRepository',
+      useClass: MySQLVerificationPersistence,
+    },
     CreateCustomerUseCase,
     FindCustomerUseCase,
     UpdateCustomerUseCase,
     DeleteCustomerUseCase,
+    SendVerificationCodeUseCase,
+    VerifyAccountByCodeUseCase,
   ],
   exports: [
     CreateCustomerUseCase,
     FindCustomerUseCase,
     UpdateCustomerUseCase,
     DeleteCustomerUseCase,
+    SendVerificationCodeUseCase,
+    VerifyAccountByCodeUseCase,
   ],
 })
 export class MySQLCustomerModule {}

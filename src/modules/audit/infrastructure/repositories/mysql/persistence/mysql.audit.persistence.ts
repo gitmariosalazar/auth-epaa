@@ -1,4 +1,7 @@
-import { AuditRegistroSQLResult, AuditSesionSQLResult } from '../../../interfaces/sql/audit.sql.result';
+import {
+  AuditRegistroSQLResult,
+  AuditSesionSQLResult,
+} from '../../../interfaces/sql/audit.sql.result';
 import { DatabaseAbstract } from '../../../../../../shared/connections/database/abstract/abstract.database';
 import { Injectable } from '@nestjs/common';
 import { InterfaceAuditRepository } from '../../../../domain/contracts/audit.interface.repository';
@@ -20,7 +23,7 @@ export class MySQLAuditPersistence implements InterfaceAuditRepository {
   async logSession(request: LogSessionRequest): Promise<void> {
     try {
       const query = `
-        SELECT sigepaa_audit.fn_registrar_acceso(
+        CALL sigepaa_audit.fn_registrar_acceso(
           ?, ?, ?, ?, ?, ?, ?
         );
       `;

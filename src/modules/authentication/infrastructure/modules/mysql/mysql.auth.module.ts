@@ -10,6 +10,8 @@ import { RefreshTokenUseCase } from '../../../application/usecases/refresh-token
 import { LogoutUseCase } from '../../../application/usecases/logout.usecase';
 import { MySQLAuthPersistence } from '../../repositories/mysql/persistence/mysql.auth.persistence';
 import { MySQLUserPersistence } from '../../../../users/infrastructure/repositories/mysql/persistence/mysql.user.persistence';
+import { ClientLoginUseCase } from '../../../application/usecases/client-login.usecase';
+import { MySQLClientAuthPersistence } from '../../repositories/mysql/persistence/mysql.client-auth.persistence';
 
 @Module({
   imports: [
@@ -18,7 +20,8 @@ import { MySQLUserPersistence } from '../../../../users/infrastructure/repositor
       global: true,
       secret: environments.JWT_SECRET,
       signOptions: { expiresIn: '1h', algorithm: 'HS256' },
-    })],
+    }),
+  ],
   controllers: [AuthController],
   providers: [
     LoginUseCase,
@@ -26,6 +29,7 @@ import { MySQLUserPersistence } from '../../../../users/infrastructure/repositor
     VerifyUserUseCase,
     RefreshTokenUseCase,
     LogoutUseCase,
+    ClientLoginUseCase,
     {
       provide: 'AuthRepository',
       useClass: MySQLAuthPersistence,
@@ -33,7 +37,12 @@ import { MySQLUserPersistence } from '../../../../users/infrastructure/repositor
     {
       provide: 'UserRepository',
       useClass: MySQLUserPersistence,
-    }],
+    },
+    {
+      provide: 'ClientAuthRepository',
+      useClass: MySQLClientAuthPersistence,
+    },
+  ],
   exports: [],
 })
 export class MySQLAuthModule {}

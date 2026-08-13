@@ -6,7 +6,7 @@ import { DatabaseAbstract } from '../../../../../../shared/connections/database/
 import { AuthSQLResult } from '../../../interfaces/sql/auth.sql.result';
 
 @Injectable()
-export class PostgreSQLClientAuthPersistence implements InterfaceClientAuthRepository {
+export class MySQLClientAuthPersistence implements InterfaceClientAuthRepository {
   constructor(private readonly databaseService: DatabaseAbstract) {}
 
   async findClientByEmail(email: string): Promise<ClientUserModel | null> {

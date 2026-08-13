@@ -107,8 +107,16 @@ export class AuthMapper {
         userId: user.userId,
         username: user.username,
         email: user.email,
-        roles: user.roles,
-        permissions: user.permissions,
+        roles: user.roles.map((role) => ({
+          id: role.id,
+          name: role.name,
+          description: role.description,
+        })),
+        permissions: user.permissions.map((permission) => ({
+          id: permission.id,
+          name: permission.name,
+          description: permission.description,
+        })),
         firstName:
           user.username === 'root' ? 'Root' : user.firstName || 'Sin Nombre',
         lastName:

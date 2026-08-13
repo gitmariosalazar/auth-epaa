@@ -2,7 +2,11 @@ export interface AuthSQLResult {
   user_id: string;
   username: string;
   email: string;
-  roles: string[];
+  roles: {
+    id: number;
+    name: string;
+    description: string;
+  }[];
   first_name: string;
   last_name: string;
   is_active: boolean | null | number;

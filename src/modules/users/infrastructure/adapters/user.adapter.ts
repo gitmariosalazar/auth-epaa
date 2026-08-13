@@ -53,6 +53,7 @@ export class UserAdapter {
   static fromUserWithRolesAndPermissionsSQLResultToUserWithRolesAndPermissionsResponse(
     user: UserWithRolesAndPermissionsSQLResult,
   ): UserResponseWithRolesAndPermissionsResponse {
+    // Debugging line
     return {
       userId: user.user_id,
       username: user.username,
@@ -84,8 +85,16 @@ export class UserAdapter {
       isActive: Boolean(user.is_active),
       observations: user.observations,
       passwordHash: user.password_hash,
-      roles: user.roles,
-      permissions: user.permissions,
+      roles: user.roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+      })),
+      permissions: user.permissions.map((permission) => ({
+        id: permission.id,
+        name: permission.name,
+        description: permission.description,
+      })),
       positionName: user.position_name,
       contractTypeName: user.contract_type_name,
     };
@@ -124,7 +133,11 @@ export class UserAdapter {
       twoFactorEnabled: Boolean(user.two_factor_enabled),
       isActive: Boolean(user.is_active),
       observations: user.observations,
-      permissions: user.permissions,
+      permissions: user.permissions.map((permission) => ({
+        id: permission.id,
+        name: permission.name,
+        description: permission.description,
+      })),
       positionName: user.position_name,
       contractTypeName: user.contract_type_name,
     };
@@ -226,8 +239,16 @@ export class UserAdapter {
             })),
           }
         : null,
-      roles: user.roles,
-      permissions: user.permissions,
+      roles: user.roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+      })),
+      permissions: user.permissions.map((permission) => ({
+        id: permission.id,
+        name: permission.name,
+        description: permission.description,
+      })),
     };
   }
 }

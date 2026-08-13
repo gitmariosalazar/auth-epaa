@@ -111,7 +111,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
 
             -- Roles (using jsonb_agg + subquery)
             COALESCE(
-                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre))
+                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
                 FROM usuario_roles ur2
                 JOIN roles r ON r.rol_id = ur2.rol_id
                 WHERE ur2.usuario_id = u.usuario_id),
@@ -120,7 +120,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
 
             -- Permissions: union + deduplicate before aggregation
             COALESCE(
-                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre))
+                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
                 FROM (
                     -- Permissions v�a roles
                     SELECT DISTINCT rp.permiso_id
@@ -221,7 +221,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
             END AS "person",
 
             COALESCE(
-                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre))
+                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
                 FROM public.cliente_usuario_roles cur
                 JOIN public.roles r ON r.rol_id = cur.rol_id
                 WHERE cur.cliente_usuario_id = cu.cliente_usuario_id),
@@ -229,7 +229,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
             )::json AS roles,
 
             COALESCE(
-                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre))
+                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
                 FROM (
                     SELECT DISTINCT rp.permiso_id
                     FROM public.cliente_usuario_roles cur
@@ -296,7 +296,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
 
             -- Roles
             COALESCE(
-                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre))
+                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
                 FROM usuario_roles ur2
                 JOIN roles r ON r.rol_id = ur2.rol_id
                 WHERE ur2.usuario_id = u.usuario_id),
@@ -305,7 +305,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
 
             -- Permissions
             COALESCE(
-                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre))
+                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
                 FROM (
                     SELECT DISTINCT rp.permiso_id
                     FROM usuario_roles ur2
@@ -912,14 +912,14 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
             u.observaciones     AS "observations",
             u.password_hash,
             COALESCE(
-                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre))
+                (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
                 FROM usuario_roles ur2
                 JOIN roles r ON r.rol_id = ur2.rol_id
                 WHERE ur2.usuario_id = u.usuario_id),
                 '[]'::jsonb
             )::json AS roles,
             COALESCE(
-                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre))
+                (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
                 FROM (
                     -- Permissions vía roles
                     SELECT DISTINCT rp.permiso_id
@@ -1121,7 +1121,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
           u.activo AS "is_active",
           u.observaciones AS "observations",
           COALESCE(
-            (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre))
+            (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
              FROM usuario_permisos up
              JOIN permisos p ON up.permiso_id = p.permiso_id
              WHERE up.usuario_id = u.usuario_id
@@ -1261,7 +1261,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
           u.activo AS "is_active",
           u.observaciones AS "observations",
           COALESCE(
-            (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre))
+            (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
              FROM usuario_roles ur
              JOIN roles r ON ur.rol_id = r.rol_id
              WHERE ur.usuario_id = u.usuario_id
@@ -1311,14 +1311,14 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
           u.activo AS "is_active",
           u.observaciones AS "observations",
           COALESCE(
-            (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre))
+            (SELECT jsonb_agg(jsonb_build_object('id', r.rol_id, 'name', r.nombre, 'description', r.descripcion))
              FROM usuario_roles ur
              JOIN roles r ON ur.rol_id = r.rol_id
              WHERE ur.usuario_id = u.usuario_id
             ), '[]'::jsonb
           )::json AS roles,
           COALESCE(
-            (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre))
+            (SELECT jsonb_agg(jsonb_build_object('id', p.permiso_id, 'name', p.nombre, 'description', p.descripcion))
              FROM usuario_permisos up
              JOIN permisos p ON up.permiso_id = p.permiso_id
              WHERE up.usuario_id = u.usuario_id

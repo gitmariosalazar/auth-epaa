@@ -1,3 +1,5 @@
+import { RolOrPermission } from '../../../../../shared/interfaces/RolOrPermission';
+
 export interface UserSQLResult {
   user_id: string;
   username: string;
@@ -34,16 +36,16 @@ export interface UserSQLResult {
 
 export interface UserWithRolesAndPermissionsSQLResult extends UserSQLResult {
   password_hash?: string;
-  roles: string[]; // Comma-separated roles
-  permissions: string[]; // Comma-separated permissions
+  roles: RolOrPermission[];
+  permissions: RolOrPermission[];
 }
 
 export interface UserWithPermissionsSQLResult extends UserSQLResult {
-  permissions: string[]; // Comma-separated permissions
+  permissions: RolOrPermission[];
 }
 
 export interface UserWithRolesSQLResult extends UserSQLResult {
-  roles: string[]; // Comma-separated roles
+  roles: RolOrPermission[];
 }
 
 export interface PhoneSqlResponse {
@@ -98,6 +100,6 @@ export interface CustomerWithRolesAndPermissionsSQLResult {
   password_hash?: string | null;
   company: CompanySqlResponse | null;
   person: ClientSqlResponse | null;
-  roles: string[];
-  permissions: string[];
+  roles: RolOrPermission[];
+  permissions: RolOrPermission[];
 }

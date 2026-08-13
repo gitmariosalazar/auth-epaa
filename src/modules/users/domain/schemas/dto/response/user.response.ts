@@ -1,3 +1,5 @@
+import { RolOrPermission } from '../../../../../../shared/interfaces/RolOrPermission';
+
 export interface UserResponse {
   userId: string;
   username: string;
@@ -35,16 +37,16 @@ export interface UserResponse {
 
 export interface UserResponseWithRolesAndPermissionsResponse extends UserResponse {
   passwordHash?: string;
-  roles: string[];
-  permissions: string[];
+  roles: RolOrPermission[];
+  permissions: RolOrPermission[];
 }
 
 export interface UserResponseWithRolesResponse extends UserResponse {
-  roles: string[];
+  roles: RolOrPermission[];
 }
 
 export interface UserResponseWithPermissionsResponse extends UserResponse {
-  permissions: string[];
+  permissions: RolOrPermission[];
 }
 
 export interface PhoneResponse {
@@ -99,6 +101,6 @@ export interface CustomerWithRolesAndPermissionsResponse {
   passwordHash?: string | null;
   company: CompanyResponse | null;
   person: ClientResponse | null;
-  roles: string[];
-  permissions: string[];
+  roles: RolOrPermission[];
+  permissions: RolOrPermission[];
 }

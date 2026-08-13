@@ -142,7 +142,7 @@ export class MySQLAuthPersistence implements InterfaceAuthRepository {
   ): Promise<void> {
     try {
       await this.databaseService.query(
-        `SELECT sigepaa_audit.fn_registrar_acceso(?, ?, ?, ?, ?, ?, ?)`,
+        `CALL sigepaa_audit.fn_registrar_acceso(?, ?, ?, ?, ?, ?, ?)`,
         [userId, username, event, ip, userAgent, reason, '{}'],
       );
     } catch (error) {

@@ -19,6 +19,7 @@ import { parseExpirationToSeconds } from '../../../../shared/utils/time.util';
 import { CreateRefreshTokenRequest } from '../../domain/schemas/dto/request/create.refresh-token.request';
 import { RefreshTokenModel } from '../../domain/schemas/models/refresh-token.model';
 import { AuditContextStorage } from '../../../../shared/utils/audit-context.storage';
+import { AccessTokenPayload } from '../interfaces/user.payload';
 
 @Injectable()
 export class LoginUseCase {
@@ -76,13 +77,16 @@ export class LoginUseCase {
       );
       throw new InvalidCredentialsException();
     }
-
-    const payload = {
+    const jtiForSend: string = crypto.randomUUID(); // Genera un identificador único para el token
+    const payload: AccessTokenPayload = {
       sub: user.userId,
+      cliente_id: user.cardId,
+      user_type: 'employee', // Assuming a default user type; adjust as necessary
       username: user.username,
       email: user.email,
-      roles: user.roles,
-      permissions: user.permissions,
+      roles: user.roles.map((role) => role.name),
+      permissions: user.permissions.map((permission) => permission.id),
+      jti: jtiForSend,
     };
 
     const accessToken = this.jwtService.sign(payload, {

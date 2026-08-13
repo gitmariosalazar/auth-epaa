@@ -18,6 +18,7 @@ import { parseExpirationToSeconds } from '../../../../shared/utils/time.util';
 import { CreateRefreshTokenRequest } from '../../domain/schemas/dto/request/create.refresh-token.request';
 import { RefreshTokenModel } from '../../domain/schemas/models/refresh-token.model';
 import { AuditContextStorage } from '../../../../shared/utils/audit-context.storage';
+import { AccessTokenPayload } from '../interfaces/user.payload';
 
 @Injectable()
 export class ClientLoginUseCase {
@@ -85,11 +86,16 @@ export class ClientLoginUseCase {
     }
 
     // Inyección de metadata clave para el Gateway
-    const payload = {
+    const jtiForSend: string = crypto.randomUUID(); // Genera un identificador único para el token
+    const payload: AccessTokenPayload = {
       sub: client.clientUserId,
       cliente_id: client.clienteId,
+      user_type: 'customer', // Assuming a default user type; adjust as necessary
+      username: client.clienteId,
       email: client.email,
-      user_type: 'customer',
+      roles: client.roles.map((role) => role.name),
+      permissions: [], // Assuming no permissions for clients; adjust as necessary
+      jti: jtiForSend,
     };
 
     const accessToken = this.jwtService.sign(payload, {
