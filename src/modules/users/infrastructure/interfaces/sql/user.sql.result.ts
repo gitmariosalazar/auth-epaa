@@ -32,6 +32,7 @@ export interface UserSQLResult {
   observations?: string | null;
   position_name?: string;
   contract_type_name?: string;
+  pin_seguridad_hash?: string;
 }
 
 export interface UserWithRolesAndPermissionsSQLResult extends UserSQLResult {

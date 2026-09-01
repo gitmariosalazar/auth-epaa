@@ -293,6 +293,7 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
             u.activo            AS "is_active",
             u.observaciones     AS "observations",
             u.password_hash     AS "password_hash",
+            u.pin_seguridad_hash AS "pin_seguridad_hash",
 
             -- Roles
             COALESCE(
@@ -1032,6 +1033,28 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
         });
       }
 
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async setPin(userId: string, hashedPin: string): Promise<boolean> {
+    try {
+      const query = `
+        UPDATE usuarios
+        SET pin_seguridad_hash = $1
+        WHERE usuario_id = $2
+        RETURNING usuario_id
+      `;
+      const result = await this.databaseService.query<any>(query, [hashedPin, userId]);
+      
+      if (result.length === 0) {
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'User not found or could not update PIN',
+        });
+      }
       return true;
     } catch (error) {
       throw error;

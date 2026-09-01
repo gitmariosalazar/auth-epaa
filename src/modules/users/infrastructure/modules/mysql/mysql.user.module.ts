@@ -8,6 +8,7 @@ import { UpdateUserUseCase } from '../../../application/usecases/update-user.use
 import { BcryptEncryptionService } from '../../adapters/bcrypt.encryption.service';
 import { AssignRoleToUserUseCase } from '../../../application/usecases/asign-role-to-user.usecase';
 import { AssignPermissionToUserUseCase } from '../../../application/usecases/asign-permission-to-user.usecase';
+import { SetPinUseCase } from '../../../application/usecases/set-pin.usecase';
 
 import { RolMySQLPersistence } from '../../../../roles/infrastructure/repositories/mysql/persistence/mysql.rol.persistence';
 import { PermissionMySQLPersistence } from '../../../../permissions/infrastructure/repositories/mysql/persistence/mysql.permission.persistence';
@@ -25,6 +26,7 @@ import { MySQLUserPersistence } from '../../repositories/mysql/persistence/mysql
     BcryptEncryptionService,
     AssignRoleToUserUseCase,
     AssignPermissionToUserUseCase,
+    SetPinUseCase,
     {
       provide: 'EncryptionService',
       useClass: BcryptEncryptionService,

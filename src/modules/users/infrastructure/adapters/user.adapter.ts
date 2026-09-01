@@ -85,6 +85,7 @@ export class UserAdapter {
       isActive: Boolean(user.is_active),
       observations: user.observations,
       passwordHash: user.password_hash,
+      pinSeguridadHash: user.pin_seguridad_hash,
       roles: user.roles.map((role) => ({
         id: role.id,
         name: role.name,

@@ -9,6 +9,7 @@ import { UpdateUserUseCase } from '../../../application/usecases/update-user.use
 import { BcryptEncryptionService } from '../../adapters/bcrypt.encryption.service';
 import { AssignRoleToUserUseCase } from '../../../application/usecases/asign-role-to-user.usecase';
 import { AssignPermissionToUserUseCase } from '../../../application/usecases/asign-permission-to-user.usecase';
+import { SetPinUseCase } from '../../../application/usecases/set-pin.usecase';
 import { PermissionPostgreSQLPersistence } from '../../../../permissions/infrastructure/repositories/postgresql/persistence/postgresql.permission.persistence';
 import { RolPostgreSQLPersistence } from '../../../../roles/infrastructure/repositories/postgresql/persistence/postgresql.rol.persistence';
 
@@ -24,6 +25,7 @@ import { RolPostgreSQLPersistence } from '../../../../roles/infrastructure/repos
     BcryptEncryptionService,
     AssignRoleToUserUseCase,
     AssignPermissionToUserUseCase,
+    SetPinUseCase,
     {
       provide: 'EncryptionService',
       useClass: BcryptEncryptionService,

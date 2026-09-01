@@ -12,6 +12,7 @@ import { VerifyUserUseCase } from '../../../application/usecases/verify-user.use
 import { RefreshTokenUseCase } from '../../../application/usecases/refresh-token.usecase';
 import { LogoutUseCase } from '../../../application/usecases/logout.usecase';
 import { ClientLoginUseCase } from '../../../application/usecases/client-login.usecase';
+import { UnlockModuleUseCase } from '../../../application/usecases/unlock-module.usecase';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ClientLoginUseCase } from '../../../application/usecases/client-login.u
     RefreshTokenUseCase,
     LogoutUseCase,
     ClientLoginUseCase,
+    UnlockModuleUseCase,
     {
       provide: 'AuthRepository',
       useClass: PostgreSQLAuthPersistence,

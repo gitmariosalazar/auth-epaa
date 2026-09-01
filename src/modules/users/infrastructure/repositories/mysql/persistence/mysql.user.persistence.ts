@@ -255,6 +255,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
             u.activo            AS "is_active",
             u.observaciones     AS "observations",
             u.password_hash     AS "password_hash",
+            u.pin_seguridad_hash AS "pin_seguridad_hash",
 
             -- Roles
             COALESCE(
@@ -949,6 +950,26 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
         });
       }
 
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async setPin(userId: string, hashedPin: string): Promise<boolean> {
+    try {
+      const query = `
+        UPDATE usuarios
+        SET pin_seguridad_hash = ?
+        WHERE usuario_id = ?
+      `;
+      const result = await this.databaseService.execute(query, [hashedPin, userId]);
+      if (result.affectedRows === 0) {
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'User not found or could not update PIN',
+        });
+      }
       return true;
     } catch (error) {
       throw error;

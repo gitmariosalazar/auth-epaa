@@ -66,6 +66,7 @@ export interface InterfaceUserRepository {
   ): Promise<UserResponse | null>;
   incrementFailedAttempts(userId: string): Promise<void>;
   resetFailedAttempts(userId: string): Promise<void>;
+  setPin(userId: string, hashedPin: string): Promise<boolean>;
 
   // Opcional: si usas refresh tokens
   findByRefreshToken(token: string): Promise<UserResponse | null>;

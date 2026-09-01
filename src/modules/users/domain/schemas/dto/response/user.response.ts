@@ -37,6 +37,7 @@ export interface UserResponse {
 
 export interface UserResponseWithRolesAndPermissionsResponse extends UserResponse {
   passwordHash?: string;
+  pinSeguridadHash?: string;
   roles: RolOrPermission[];
   permissions: RolOrPermission[];
 }

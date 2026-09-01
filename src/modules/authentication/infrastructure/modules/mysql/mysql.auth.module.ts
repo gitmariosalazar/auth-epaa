@@ -12,6 +12,7 @@ import { MySQLAuthPersistence } from '../../repositories/mysql/persistence/mysql
 import { MySQLUserPersistence } from '../../../../users/infrastructure/repositories/mysql/persistence/mysql.user.persistence';
 import { ClientLoginUseCase } from '../../../application/usecases/client-login.usecase';
 import { MySQLClientAuthPersistence } from '../../repositories/mysql/persistence/mysql.client-auth.persistence';
+import { UnlockModuleUseCase } from '../../../application/usecases/unlock-module.usecase';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MySQLClientAuthPersistence } from '../../repositories/mysql/persistence
     RefreshTokenUseCase,
     LogoutUseCase,
     ClientLoginUseCase,
+    UnlockModuleUseCase,
     {
       provide: 'AuthRepository',
       useClass: MySQLAuthPersistence,

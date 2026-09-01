@@ -7,6 +7,7 @@ export interface AccessTokenPayload {
   roles: string[];
   permissions: number[];
   jti: string;
+  module_special_unlocked?: boolean;
 }
 
 export interface RefreshTokenPayload {

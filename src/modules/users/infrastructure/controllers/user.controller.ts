@@ -6,6 +6,7 @@ import { CreateUserUseCase } from '../../application/usecases/create-user.usecas
 import { FindUserUseCase } from '../../application/usecases/find-user.usecase';
 import { AuthUserUseCase } from '../../application/usecases/auth.usecase';
 import { UpdateUserUseCase } from '../../application/usecases/update-user.usecase';
+import { SetPinUseCase } from '../../application/usecases/set-pin.usecase';
 import { UserDomainException } from '../../domain/exceptions/user.exceptions';
 import { statusCode } from '../../../../settings/environments/status-code';
 import { AssignRoleToUserUseCase } from '../../application/usecases/asign-role-to-user.usecase';
@@ -18,6 +19,7 @@ import {
   AssignPermissionToUserRequest,
   RemovePermissionFromUserRequest,
 } from '../../domain/schemas/dto/request/assign-permission-to-user.request';
+import { SetPinRequest } from '../../domain/schemas/dto/request/set-pin.request';
 
 @Controller('users')
 export class UserController {
@@ -28,6 +30,7 @@ export class UserController {
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly assignRoleToUserUseCase: AssignRoleToUserUseCase,
     private readonly assignPermissionToUserUseCase: AssignPermissionToUserUseCase,
+    private readonly setPinUseCase: SetPinUseCase,
   ) {}
 
   private handleException(error: any): never {
@@ -122,6 +125,15 @@ export class UserController {
   ) {
     try {
       return await this.updateUserUseCase.updateUser(data.userId, data.updates);
+    } catch (error) {
+      this.handleException(error);
+    }
+  }
+
+  @MessagePattern('authentication.user.set_pin')
+  async setPin(@Payload() payload: SetPinRequest) {
+    try {
+      return await this.setPinUseCase.execute(payload);
     } catch (error) {
       this.handleException(error);
     }
