@@ -148,7 +148,6 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
           query,
           params,
         );
-      console.log('Result from DB:', result[0].is_active);
       if (result.length === 0) {
         return null;
       }
@@ -223,7 +222,6 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
           query,
           params,
         );
-      console.log('Result from DB:', result[0]?.is_active);
       if (result.length === 0) {
         return null;
       }
@@ -963,7 +961,10 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
         SET pin_seguridad_hash = ?
         WHERE usuario_id = ?
       `;
-      const result = await this.databaseService.execute(query, [hashedPin, userId]);
+      const result = await this.databaseService.execute(query, [
+        hashedPin,
+        userId,
+      ]);
       if (result.affectedRows === 0) {
         throw new RpcException({
           statusCode: statusCode.NOT_FOUND,

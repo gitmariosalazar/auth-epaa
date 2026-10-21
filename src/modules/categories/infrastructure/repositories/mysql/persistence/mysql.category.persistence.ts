@@ -209,7 +209,6 @@ export class CategoryMySQLPersistence implements InterfaceCategoryRepository {
       const params: number[] = [categoryId];
 
       const result = await this.databaseService.execute(query, params);
-      console.log('Delete result Pers:', result);
       return result && result.affectedRows > 0;
     } catch (error) {
       throw error;

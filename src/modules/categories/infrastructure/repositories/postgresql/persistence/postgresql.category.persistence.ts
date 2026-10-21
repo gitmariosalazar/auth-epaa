@@ -45,9 +45,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       }
 
       const createdCategory: CategoryResponse =
-        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
-          result[0],
-        );
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(result[0]);
 
       return createdCategory;
     } catch (error) {
@@ -91,9 +89,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       }
 
       const updatedCategory: CategoryResponse =
-        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
-          result[0],
-        );
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(result[0]);
 
       return updatedCategory;
     } catch (error) {
@@ -127,9 +123,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       }
 
       const category: CategoryResponse =
-        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
-          result[0],
-        );
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(result[0]);
 
       return category;
     } catch (error) {
@@ -160,9 +154,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       );
 
       const categories: CategoryResponse[] = result.map((categorySql) =>
-        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
-          categorySql,
-        ),
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(categorySql),
       );
 
       return categories;
@@ -199,7 +191,6 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       const params: number[] = [categoryId];
 
       const result = await this.databaseService.execute(query, params);
-      console.log('Delete result Pers:', result);
       return result && result.affectedRows > 0;
     } catch (error) {
       throw error;
@@ -225,9 +216,7 @@ export class CategoryPostgreSQLPersistence implements InterfaceCategoryRepositor
       );
 
       return result.map((categorySql) =>
-        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(
-          categorySql,
-        ),
+        CategoryAdapter.fromCategorySqlResponseToCategoryResponse(categorySql),
       );
     } catch (error) {
       throw error;
