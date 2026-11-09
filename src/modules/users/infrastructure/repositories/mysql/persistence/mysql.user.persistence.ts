@@ -132,6 +132,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
                     SELECT DISTINCT up.permiso_id
                     FROM usuario_permisos up
                     WHERE up.usuario_id = u.usuario_id
+                      AND (up.fecha_expiracion IS NULL OR up.fecha_expiracion > NOW())
                 ) src
                 JOIN permisos p ON p.permiso_id = src.permiso_id
                 ),
@@ -204,6 +205,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
                     SELECT DISTINCT up.permiso_id
                     FROM usuario_permisos up
                     WHERE up.usuario_id = u.usuario_id
+                      AND (up.fecha_expiracion IS NULL OR up.fecha_expiracion > NOW())
                 ) src
                 JOIN permisos p ON p.permiso_id = src.permiso_id
                 ),
@@ -276,6 +278,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
                     SELECT DISTINCT up.permiso_id
                     FROM usuario_permisos up
                     WHERE up.usuario_id = u.usuario_id
+                      AND (up.fecha_expiracion IS NULL OR up.fecha_expiracion > NOW())
                 ) src
                 JOIN permisos p ON p.permiso_id = src.permiso_id
                 ),
@@ -851,6 +854,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
                     SELECT DISTINCT up.permiso_id
                     FROM usuario_permisos up
                     WHERE up.usuario_id = u.usuario_id
+                      AND (up.fecha_expiracion IS NULL OR up.fecha_expiracion > NOW())
                 ) src
                 JOIN permisos p ON p.permiso_id = src.permiso_id
                 ),
@@ -892,14 +896,21 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
     assignPermissionToUserRequest: AssignPermissionToUserRequest,
   ): Promise<boolean> {
     try {
+      const expirationDate =
+        assignPermissionToUserRequest.expirationDate ??
+        (typeof assignPermissionToUserRequest.getExpirationDate === 'function'
+          ? assignPermissionToUserRequest.getExpirationDate()
+          : null) ??
+        null;
       const query: string = `
-        INSERT INTO usuario_permisos (usuario_id, permiso_id)
-        VALUES (?, ?)
-        RETURNING usuario_id, permiso_id;
+        INSERT INTO usuario_permisos (usuario_id, permiso_id, fecha_expiracion)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE fecha_expiracion = VALUES(fecha_expiracion);
       `;
       const params = [
         assignPermissionToUserRequest.userId,
         assignPermissionToUserRequest.permissionId,
+        expirationDate,
       ];
 
       const result =
@@ -915,6 +926,35 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
         });
       }
 
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async assignPermissionsBatchToUser(
+    userId: string,
+    permissions: Array<{
+      permissionId: number;
+      expirationDate?: Date | string | null;
+    }>,
+  ): Promise<boolean> {
+    try {
+      if (permissions.length === 0) return true;
+
+      for (const item of permissions) {
+        const expirationDate = item.expirationDate ?? null;
+        const query: string = `
+          INSERT INTO usuario_permisos (usuario_id, permiso_id, fecha_expiracion)
+          VALUES (?, ?, ?)
+          ON DUPLICATE KEY UPDATE fecha_expiracion = VALUES(fecha_expiracion);
+        `;
+        await this.databaseService.execute(query, [
+          userId,
+          item.permissionId,
+          expirationDate,
+        ]);
+      }
       return true;
     } catch (error) {
       throw error;
@@ -987,6 +1027,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
           SELECT 1
           FROM usuario_permisos
           WHERE usuario_id = ? AND permiso_id = ?
+            AND (fecha_expiracion IS NULL OR fecha_expiracion > NOW())
         );
       `;
       const params = [userId, permissionId];
@@ -1064,6 +1105,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
              FROM usuario_permisos up
              JOIN permisos p ON up.permiso_id = p.permiso_id
              WHERE up.usuario_id = u.usuario_id
+               AND (up.fecha_expiracion IS NULL OR up.fecha_expiracion > NOW())
             ), JSON_ARRAY()
           ) AS permissions
         FROM usuarios u
@@ -1261,6 +1303,7 @@ export class MySQLUserPersistence implements InterfaceUserRepository {
              FROM usuario_permisos up
              JOIN permisos p ON up.permiso_id = p.permiso_id
              WHERE up.usuario_id = u.usuario_id
+               AND (up.fecha_expiracion IS NULL OR up.fecha_expiracion > NOW())
             ), JSON_ARRAY()
           ) AS permissions
         FROM usuarios u

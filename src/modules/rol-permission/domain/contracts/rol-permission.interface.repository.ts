@@ -21,4 +21,9 @@ export interface InterfaceRolPermissionRepository {
     rolId: number,
     permissionId: number,
   ): Promise<boolean>;
+  assignPermissionsBatch(
+    rolId: number,
+    permissionIds: number[],
+  ): Promise<boolean>;
+  getPermissionsByRolId(rolId: number): Promise<RolPermissionResponse[]>;
 }

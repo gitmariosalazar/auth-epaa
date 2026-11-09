@@ -17,7 +17,7 @@ export class PermissionSQLAdapter {
       permissionDescription: sqlResponse.permission_description,
       isActive: Boolean(sqlResponse.is_active),
       categoryId: sqlResponse.category_id,
-      scoppes: sqlResponse.scoppes,
+      scoppes: sqlResponse.scoppes ?? sqlResponse.scopes ?? undefined,
     };
   }
 

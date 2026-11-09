@@ -143,9 +143,62 @@ export class RolPermissionMySQLPersistence
       `;
       const params = [rolId, permissionId];
 
-      const result = await this.databaseService.query<any>(query, params);
+      const result = await this.databaseService.query<{ exists: number | boolean }>(
+        query,
+        params,
+      );
 
       return Boolean(result[0].exists);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async assignPermissionsBatch(
+    rolId: number,
+    permissionIds: number[],
+  ): Promise<boolean> {
+    try {
+      if (permissionIds.length === 0) return true;
+      const valuesPlaceholders = permissionIds.map(() => '(?, ?)').join(', ');
+      const query = `
+        INSERT IGNORE INTO rol_permisos (rol_id, permiso_id)
+        VALUES ${valuesPlaceholders};
+      `;
+      const params: number[] = [];
+      for (const permId of permissionIds) {
+        params.push(rolId, permId);
+      }
+      await this.databaseService.execute(query, params);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getPermissionsByRolId(
+    rolId: number,
+  ): Promise<RolPermissionResponse[]> {
+    try {
+      const query = `
+        SELECT 
+          rol_permiso_id AS "rol_permission_id",
+          rol_id AS "rol_id",
+          permiso_id AS "permission_id"
+        FROM rol_permisos
+        WHERE rol_id = ?
+        ORDER BY rol_permiso_id;
+      `;
+      const result = await this.databaseService.query<RolPermissionSQLResult>(
+        query,
+        [rolId],
+      );
+
+      return result.map((rolPermissionSQL) =>
+        RolPermissionAdapter.fromRolPermissionSQLResultToRolPermissionResponse(
+          rolPermissionSQL,
+        ),
+      );
     } catch (error) {
       throw error;
     }

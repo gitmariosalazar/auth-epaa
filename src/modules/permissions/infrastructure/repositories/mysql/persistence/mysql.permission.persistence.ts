@@ -31,9 +31,11 @@ export class PermissionMySQLPersistence
       `;
       const params = [permissionName];
 
-      const result = await this.databaseService.query<any>(query, params);
+      const result = await this.databaseService.query<{
+        exists: number | boolean;
+      }>(query, params);
 
-      return result[0].exists;
+      return Boolean(result[0].exists);
     } catch (error) {
       throw error;
     }
@@ -129,14 +131,15 @@ export class PermissionMySQLPersistence
   ): Promise<PermissionResponse | null> {
     try {
       const query: string = `
-        INSERT INTO permisos (nombre, descripcion, activo, categoria_id)
-        VALUES (?, ?, ?, ?);
+        INSERT INTO permisos (nombre, descripcion, activo, categoria_id, scopes)
+        VALUES (?, ?, ?, ?, ?);
       `;
       const params = [
         permission.getName(),
         permission.getDescription(),
         permission.getIsActive(),
         permission.getCategoryId(),
+        permission.getScoppes() || null,
       ];
 
       const result = await this.databaseService.execute(query, params);
@@ -145,7 +148,7 @@ export class PermissionMySQLPersistence
         return null;
       }
 
-      const rows = await this.databaseService.getClient().then(c => c.query<PermissionSQLResponse>('SELECT permiso_id AS permission_id, nombre AS permission_name, descripcion AS permission_description, activo AS is_active, categoria_id AS category_id FROM permisos WHERE permiso_id = ?', [result.insertId]).finally(() => c.release()));
+      const rows = await this.databaseService.getClient().then(c => c.query<PermissionSQLResponse>('SELECT permiso_id AS permission_id, nombre AS permission_name, descripcion AS permission_description, scopes AS scoppes, activo AS is_active, categoria_id AS category_id FROM permisos WHERE permiso_id = ?', [result.insertId]).finally(() => c.release()));
 
       return PermissionSQLAdapter.toPermissionResponse(rows[0]);
     } catch (error) {
@@ -163,7 +166,8 @@ export class PermissionMySQLPersistence
         SET nombre = ?,
             descripcion = ?,
             activo = ?,
-            categoria_id = ?
+            categoria_id = ?,
+            scopes = ?
         WHERE permiso_id = ?;
       `;
       const params = [
@@ -171,6 +175,7 @@ export class PermissionMySQLPersistence
         permission.getDescription(),
         permission.getIsActive(),
         permission.getCategoryId(),
+        permission.getScoppes() || null,
         permissionId,
       ];
 

@@ -18,7 +18,7 @@ export class CategoryController {
     private readonly deleteCategoryUseCase: DeleteCategoryUseCase,
   ) {}
 
-  private handleException(error: any): never {
+  private handleException(error: unknown): never {
     if (error instanceof CategoryDomainException) {
       throw new RpcException({
         statusCode: statusCode.BAD_REQUEST,
@@ -27,9 +27,11 @@ export class CategoryController {
     }
     if (error instanceof RpcException) throw error;
 
+    const message =
+      error instanceof Error ? error.message : 'Internal server error';
     throw new RpcException({
       statusCode: statusCode.INTERNAL_SERVER_ERROR,
-      message: error.message || 'Internal server error',
+      message,
     });
   }
 

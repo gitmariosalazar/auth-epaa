@@ -207,7 +207,10 @@ export class RolMySQLPersistence implements InterfaceRolRepository {
       `;
       const params = [name];
 
-      const result = await this.databaseService.query<any>(query, params);
+      const result = await this.databaseService.query<{ 1: number }>(
+        query,
+        params,
+      );
 
       return result.length > 0;
     } catch (error) {

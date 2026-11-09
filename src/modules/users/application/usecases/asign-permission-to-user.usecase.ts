@@ -4,6 +4,7 @@ import {
   AssignPermissionToUserRequest,
   RemovePermissionFromUserRequest,
 } from '../../domain/schemas/dto/request/assign-permission-to-user.request';
+import { AssignPermissionsBatchToUserRequest } from '../../domain/schemas/dto/request/assign-permissions-batch-to-user.request';
 import {
   UserDomainException,
   UserNotFoundException,
@@ -54,6 +55,46 @@ export class AssignPermissionToUserUseCase {
       throw new UserDomainException('User already has this permission');
     return await this.userRepository.assignPermissionToUser(
       assignPermissionToUserRequest,
+    );
+  }
+
+  async assignPermissionsBatchToUser(
+    request: AssignPermissionsBatchToUserRequest,
+  ): Promise<boolean> {
+    const userId =
+      typeof request?.getUserId === 'function'
+        ? request.getUserId()
+        : request?.userId;
+    const permissions =
+      typeof request?.getPermissions === 'function'
+        ? request.getPermissions()
+        : request?.permissions;
+
+    if (!userId) {
+      throw new UserDomainException('User ID is required');
+    }
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UserNotFoundException(userId);
+    }
+    if (!Array.isArray(permissions) || permissions.length === 0) {
+      throw new UserDomainException('Permissions must be a non-empty array');
+    }
+
+    const sanitizedPermissions = permissions
+      .map((item) => ({
+        permissionId: Number(item?.permissionId),
+        expirationDate: item?.expirationDate ?? null,
+      }))
+      .filter((item) => !isNaN(item.permissionId) && item.permissionId > 0);
+
+    if (sanitizedPermissions.length === 0) {
+      throw new UserDomainException('No valid permissions found in request');
+    }
+
+    return await this.userRepository.assignPermissionsBatchToUser(
+      userId,
+      sanitizedPermissions,
     );
   }
 

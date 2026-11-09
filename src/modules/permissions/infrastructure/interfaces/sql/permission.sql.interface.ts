@@ -2,7 +2,8 @@ export interface PermissionSQLResponse {
   permission_id: number;
   permission_name: string;
   permission_description: string;
-  scoppes: string;
+  scoppes?: string | null;
+  scopes?: string | null;
   is_active: boolean | null | number;
   category_id: number;
 }

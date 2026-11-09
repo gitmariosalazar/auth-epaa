@@ -24,7 +24,7 @@ export class PermissionController {
     private readonly getPermissionSearchAdvancedUseCase: GetPermissionSearchAdvancedUseCase,
   ) {}
 
-  private handleException(error: any): never {
+  private handleException(error: unknown): never {
     if (error instanceof PermissionDomainException) {
       throw new RpcException({
         statusCode: statusCode.BAD_REQUEST,
@@ -33,9 +33,11 @@ export class PermissionController {
     }
     if (error instanceof RpcException) throw error;
 
+    const message =
+      error instanceof Error ? error.message : 'Internal server error';
     throw new RpcException({
       statusCode: statusCode.INTERNAL_SERVER_ERROR,
-      message: error.message || 'Internal server error',
+      message,
     });
   }
 

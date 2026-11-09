@@ -2,10 +2,12 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { CreateRolPermissionRequest } from '../../domain/schemas/dto/request/create.rol-permission.request';
 import { UpdateRolPermissionRequest } from '../../domain/schemas/dto/request/update.rol-permission.request';
+import { AssignPermissionsBatchRequest } from '../../domain/schemas/dto/request/assign-permissions-batch.request';
 import { CreateRolPermissionUseCase } from '../../application/usecases/create-rol-permission.usecase';
 import { FindRolPermissionUseCase } from '../../application/usecases/find-rol-permission.usecase';
 import { UpdateRolPermissionUseCase } from '../../application/usecases/update-rol-permission.usecase';
 import { DeleteRolPermissionUseCase } from '../../application/usecases/delete-rol-permission.usecase';
+import { AssignPermissionsBatchUseCase } from '../../application/usecases/assign-permissions-batch.usecase';
 import { RolPermissionDomainException } from '../../domain/exceptions/rol-permission.exceptions';
 import { statusCode } from '../../../../settings/environments/status-code';
 
@@ -16,9 +18,10 @@ export class RolPermissionController {
     private readonly findRolPermissionUseCase: FindRolPermissionUseCase,
     private readonly updateRolPermissionUseCase: UpdateRolPermissionUseCase,
     private readonly deleteRolPermissionUseCase: DeleteRolPermissionUseCase,
+    private readonly assignPermissionsBatchUseCase: AssignPermissionsBatchUseCase,
   ) {}
 
-  private handleException(error: any): never {
+  private handleException(error: unknown): never {
     if (error instanceof RolPermissionDomainException) {
       throw new RpcException({
         statusCode: statusCode.BAD_REQUEST,
@@ -27,9 +30,11 @@ export class RolPermissionController {
     }
     if (error instanceof RpcException) throw error;
 
+    const message =
+      error instanceof Error ? error.message : 'Internal server error';
     throw new RpcException({
       statusCode: statusCode.INTERNAL_SERVER_ERROR,
-      message: error.message || 'Internal server error',
+      message,
     });
   }
 
@@ -104,6 +109,26 @@ export class RolPermissionController {
         payload.rolId,
         payload.permissionId,
       );
+    } catch (error) {
+      this.handleException(error);
+    }
+  }
+
+  @MessagePattern('authentication.rol_permission.assign_permissions_batch')
+  async assignPermissionsBatch(
+    @Payload() payload: AssignPermissionsBatchRequest,
+  ) {
+    try {
+      return await this.assignPermissionsBatchUseCase.execute(payload);
+    } catch (error) {
+      this.handleException(error);
+    }
+  }
+
+  @MessagePattern('authentication.rol_permission.get_permissions_by_rol_id')
+  async getPermissionsByRolId(@Payload() rolId: number) {
+    try {
+      return await this.findRolPermissionUseCase.findByRolId(rolId);
     } catch (error) {
       this.handleException(error);
     }

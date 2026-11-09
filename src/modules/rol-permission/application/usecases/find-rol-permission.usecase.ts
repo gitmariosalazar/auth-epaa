@@ -49,4 +49,11 @@ export class FindRolPermissionUseCase {
       permissionId,
     );
   }
+
+  async findByRolId(rolId: number): Promise<RolPermissionResponse[]> {
+    if (isNaN(rolId) || rolId <= 0) {
+      throw new RolPermissionDomainException('Invalid rolId');
+    }
+    return await this.rolPermissionRepository.getPermissionsByRolId(rolId);
+  }
 }

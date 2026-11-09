@@ -83,8 +83,17 @@ export class RefreshTokenUseCase {
         sub: user!.userId,
         username: user!.username,
         email: user!.email,
-        roles: user!.roles,
-        permissions: user!.permissions,
+        roles: Array.isArray(user!.roles)
+          ? user!.roles.map((r: { name?: string; nombre?: string } | string) =>
+              typeof r === 'string' ? r : r.name || r.nombre || '',
+            )
+          : [],
+        permissions: Array.isArray(user!.permissions)
+          ? user!.permissions.map(
+              (p: { id?: number; permiso_id?: number } | number) =>
+                typeof p === 'number' ? p : p.id || p.permiso_id || 0,
+            )
+          : [],
       };
     }
 

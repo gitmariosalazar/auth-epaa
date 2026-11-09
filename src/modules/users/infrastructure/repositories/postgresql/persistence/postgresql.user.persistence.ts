@@ -1006,6 +1006,36 @@ export class PostgreSQLUserPersistence implements InterfaceUserRepository {
     }
   }
 
+  async assignPermissionsBatchToUser(
+    userId: string,
+    permissions: Array<{
+      permissionId: number;
+      expirationDate?: Date | string | null;
+    }>,
+  ): Promise<boolean> {
+    try {
+      if (permissions.length === 0) return true;
+
+      for (const item of permissions) {
+        const expirationDate = item.expirationDate ?? null;
+        const query: string = `
+          INSERT INTO usuario_permisos (usuario_id, permiso_id, fecha_expiracion)
+          VALUES ($1, $2, $3)
+          ON CONFLICT (usuario_id, permiso_id) DO UPDATE
+          SET fecha_expiracion = EXCLUDED.fecha_expiracion, updated_at = NOW();
+        `;
+        await this.databaseService.execute(query, [
+          userId,
+          item.permissionId,
+          expirationDate,
+        ]);
+      }
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async removePermissionFromUser(
     removePermissionFromUserRequest: RemovePermissionFromUserRequest,
   ): Promise<boolean> {

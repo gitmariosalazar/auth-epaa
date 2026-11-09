@@ -19,6 +19,7 @@ import {
   AssignPermissionToUserRequest,
   RemovePermissionFromUserRequest,
 } from '../../domain/schemas/dto/request/assign-permission-to-user.request';
+import { AssignPermissionsBatchToUserRequest } from '../../domain/schemas/dto/request/assign-permissions-batch-to-user.request';
 import { SetPinRequest } from '../../domain/schemas/dto/request/set-pin.request';
 
 @Controller('users')
@@ -33,21 +34,21 @@ export class UserController {
     private readonly setPinUseCase: SetPinUseCase,
   ) {}
 
-  private handleException(error: any): never {
+  private handleException(error: unknown): never {
     if (error instanceof UserDomainException) {
       throw new RpcException({
         statusCode: statusCode.BAD_REQUEST, // Default to BAD_REQUEST for domain errors like validation, conflict, etc.
-        // Ideally map specific exceptions to specific codes e.g. NotFound -> 404
-        // But for now, ensuring it's an RpcException is key.
         message: error.message,
       });
     }
     // Repackage other errors or let them bubble if they are already RpcException
     if (error instanceof RpcException) throw error;
 
+    const message =
+      error instanceof Error ? error.message : 'Internal server error';
     throw new RpcException({
       statusCode: statusCode.INTERNAL_SERVER_ERROR,
-      message: error.message || 'Internal server error',
+      message,
     });
   }
 
@@ -318,6 +319,19 @@ export class UserController {
   async assignPermissionToUser(@Payload() data: AssignPermissionToUserRequest) {
     try {
       return await this.assignPermissionToUserUseCase.assignPermissionToUser(
+        data,
+      );
+    } catch (error) {
+      this.handleException(error);
+    }
+  }
+
+  @MessagePattern('authentication.user.assign_permissions_batch_to_user')
+  async assignPermissionsBatchToUser(
+    @Payload() data: AssignPermissionsBatchToUserRequest,
+  ) {
+    try {
+      return await this.assignPermissionToUserUseCase.assignPermissionsBatchToUser(
         data,
       );
     } catch (error) {

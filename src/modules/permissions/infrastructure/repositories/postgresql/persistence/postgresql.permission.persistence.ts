@@ -31,7 +31,10 @@ export class PermissionPostgreSQLPersistence
       `;
       const params = [permissionName];
 
-      const result = await this.databaseService.query<any>(query, params);
+      const result = await this.databaseService.query<{ exists: boolean }>(
+        query,
+        params,
+      );
 
       return result[0].exists;
     } catch (error) {
@@ -48,6 +51,7 @@ export class PermissionPostgreSQLPersistence
           permiso_id AS permission_id,
           nombre AS permission_name,
           descripcion AS permission_description,
+          scopes AS scoppes,
           activo AS is_active,
           categoria_id AS category_id
         FROM permisos
@@ -83,6 +87,7 @@ export class PermissionPostgreSQLPersistence
           permiso_id AS permission_id,
           nombre AS permission_name,
           descripcion AS permission_description,
+          scopes AS scoppes,
           activo AS is_active,
           categoria_id AS category_id
         FROM permisos;
@@ -129,12 +134,13 @@ export class PermissionPostgreSQLPersistence
   ): Promise<PermissionResponse | null> {
     try {
       const query: string = `
-        INSERT INTO permisos (nombre, descripcion, activo, categoria_id)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO permisos (nombre, descripcion, activo, categoria_id, scopes)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING 
           permiso_id AS permission_id,
           nombre AS permission_name,
           descripcion AS permission_description,
+          scopes AS scoppes,
           activo AS is_active,
           categoria_id AS category_id;
       `;
@@ -143,6 +149,7 @@ export class PermissionPostgreSQLPersistence
         permission.getDescription(),
         permission.getIsActive(),
         permission.getCategoryId(),
+        permission.getScoppes() || null,
       ];
 
       const result = await this.databaseService.query<PermissionSQLResponse>(
@@ -173,12 +180,14 @@ export class PermissionPostgreSQLPersistence
         SET nombre = $1,
             descripcion = $2,
             activo = $3,
-            categoria_id = $4
-        WHERE permiso_id = $5
+            categoria_id = $4,
+            scopes = $5
+        WHERE permiso_id = $6
         RETURNING 
           permiso_id AS permission_id,
           nombre AS permission_name,
           descripcion AS permission_description,
+          scopes AS scoppes,
           activo AS is_active,
           categoria_id AS category_id;
       `;
@@ -187,6 +196,7 @@ export class PermissionPostgreSQLPersistence
         permission.getDescription(),
         permission.getIsActive(),
         permission.getCategoryId(),
+        permission.getScoppes() || null,
         permissionId,
       ];
 

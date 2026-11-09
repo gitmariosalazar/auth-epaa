@@ -86,6 +86,13 @@ export interface InterfaceUserRepository {
   assignPermissionToUser(
     assignPermissionToUserRequest: AssignPermissionToUserRequest,
   ): Promise<boolean>;
+  assignPermissionsBatchToUser(
+    userId: string,
+    permissions: Array<{
+      permissionId: number;
+      expirationDate?: Date | string | null;
+    }>,
+  ): Promise<boolean>;
   removePermissionFromUser(
     removePermissionFromUserRequest: RemovePermissionFromUserRequest,
   ): Promise<boolean>;
